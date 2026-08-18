@@ -4,8 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>无损作品集 - 极简展示</title>
-    <!-- 使用国内极速 CDN 加载 Supabase SDK，解决移动端转圈打不开问题 -->
-    <script src="https://cdn.bootcdn.net/ajax/libs/supabase-js/2.39.8/supabase.min.js"></script>
     <style>
         :root {
             --bg-color: #0f0f11;
@@ -78,7 +76,6 @@
         .item-card:active { cursor: grabbing; }
         .item-card.dragging { opacity: 0.4; transform: scale(0.98); }
 
-        /* 防止拖拽触发第三方扩展插件 */
         .item-card img { 
             width: 100%; 
             display: block; 
@@ -152,8 +149,8 @@
 
     <main>
         <div id="expired-view">
-            <h2>⚠️ 链接加载异常或已失效</h2>
-            <p style="color: var(--sub-text); margin-top: 10px;" id="expired-msg">无法拉取作品集数据，请检查网络或重新打开。</p>
+            <h2>⚠️ 链接已失效或打不开</h2>
+            <p style="color: var(--sub-text); margin-top: 10px;" id="expired-msg">无法拉取作品集数据，请确认链接是否完整。</p>
         </div>
 
         <div id="app-view">
@@ -209,15 +206,6 @@
     <script>
         const SUPABASE_URL = 'https://yqgkohlybphjepgbfzqm.supabase.co';
         const SUPABASE_ANON_KEY = 'sb_publishable_WlJg39rJcx_L7lO8wDG-zw_qTE4fF5o';
-        
-        let supabaseClient = null;
-
-        function getSupabase() {
-            if (!supabaseClient && typeof supabase !== 'undefined') {
-                supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-            }
-            return supabaseClient;
-        }
 
         let itemsList = []; 
 
@@ -378,10 +366,8 @@
             document.getElementById('share-modal').style.display = 'none';
         }
 
+        // 使用原生 Fetch API 替代 Supabase SDK，实现零加载延迟与全面密钥兼容
         async function publishPortfolio() {
-            const client = getSupabase();
-            if (!client) return alert("网络连接异常，请刷新页面后重试");
-
             const btn = document.getElementById('start-upload-btn');
             const btnText = document.getElementById('btn-text');
             btn.disabled = true;
@@ -396,17 +382,20 @@
                         const fileName = `${Date.now()}_${Math.random().toString(36).substring(2, 8)}.${ext}`;
                         const filePath = `raw/${fileName}`;
 
-                        const { error: uploadError } = await client.storage
-                            .from('user-images')
-                            .upload(filePath, item.file);
+                        const uploadRes = await fetch(`${SUPABASE_URL}/storage/v1/object/user-images/${filePath}`, {
+                            method: 'POST',
+                            headers: {
+                                'apikey': SUPABASE_ANON_KEY,
+                                'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+                                'Content-Type': item.file.type || 'application/octet-stream'
+                            },
+                            body: item.file
+                        });
 
-                        if (uploadError) throw uploadError;
+                        if (!uploadRes.ok) throw new Error("图片上传失败");
 
-                        const { data: urlData } = client.storage
-                            .from('user-images')
-                            .getPublicUrl(filePath);
-
-                        finalItems.push({ type: 'image', url: urlData.publicUrl });
+                        const publicUrl = `${SUPABASE_URL}/storage/v1/object/public/user-images/${filePath}`;
+                        finalItems.push({ type: 'image', url: publicUrl });
                     } else {
                         finalItems.push({ type: item.type, url: item.url });
                     }
@@ -419,16 +408,27 @@
                 else if (expireOption === '24h') expireAt = new Date(now.getTime() + 24 * 3600 * 1000);
                 else if (expireOption === '7d') expireAt = new Date(now.getTime() + 7 * 24 * 3600 * 1000);
 
-                const { data: record, error: dbError } = await client
-                    .from('portfolios')
-                    .insert([{
+                const dbRes = await fetch(`${SUPABASE_URL}/rest/v1/portfolios`, {
+                    method: 'POST',
+                    headers: {
+                        'apikey': SUPABASE_ANON_KEY,
+                        'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+                        'Content-Type': 'application/json',
+                        'Prefer': 'return=representation'
+                    },
+                    body: JSON.stringify([{
                         images: finalItems,
                         expire_at: expireAt ? expireAt.toISOString() : null
                     }])
-                    .select()
-                    .single();
+                });
 
-                if (dbError) throw dbError;
+                if (!dbRes.ok) {
+                    const errData = await dbRes.json();
+                    throw new Error(errData.message || "保存数据库失败");
+                }
+
+                const records = await dbRes.json();
+                const record = records[0];
 
                 const shareUrl = `${window.location.origin}${window.location.pathname}?share=${record.id}`;
                 document.getElementById('share-result').style.display = 'block';
@@ -482,17 +482,20 @@
         }
 
         async function loadSharedPortfolio(shareId) {
-            const client = getSupabase();
-            if (!client) return showExpiredUI("网络库加载超时，请长按刷新重试。");
-
             try {
-                const { data: portfolio, error } = await client
-                    .from('portfolios')
-                    .select('*')
-                    .eq('id', shareId)
-                    .single();
+                const res = await fetch(`${SUPABASE_URL}/rest/v1/portfolios?id=eq.${shareId}&select=*`, {
+                    headers: {
+                        'apikey': SUPABASE_ANON_KEY,
+                        'Authorization': `Bearer ${SUPABASE_ANON_KEY}`
+                    }
+                });
 
-                if (error || !portfolio) return showExpiredUI("作品集不存在。");
+                if (!res.ok) return showExpiredUI("拉取作品集失败。");
+
+                const records = await res.json();
+                if (!records || records.length === 0) return showExpiredUI("作品集不存在。");
+
+                const portfolio = records[0];
 
                 if (portfolio.expire_at && Date.now() > new Date(portfolio.expire_at).getTime()) {
                     return showExpiredUI("该作品集的分享时限已到期。");
@@ -508,7 +511,7 @@
 
             } catch (err) {
                 console.error(err);
-                showExpiredUI("网络连接超时，请重试。");
+                showExpiredUI("网络连接超时，请刷新重试。");
             }
         }
 
