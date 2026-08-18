@@ -4,8 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>无损作品集 - 极简展示</title>
-    <!-- 升级至最新版 Supabase SDK，全面支持 sb_publishable_ 格式密钥 -->
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+    <!-- 使用国内极速 CDN 加载 Supabase SDK，解决移动端转圈打不开问题 -->
+    <script src="https://cdn.bootcdn.net/ajax/libs/supabase-js/2.39.8/supabase.min.js"></script>
     <style>
         :root {
             --bg-color: #0f0f11;
@@ -78,7 +78,7 @@
         .item-card:active { cursor: grabbing; }
         .item-card.dragging { opacity: 0.4; transform: scale(0.98); }
 
-        /* 禁止 img 响应鼠标与拖拽，防止触发花瓣网等采集插件 */
+        /* 防止拖拽触发第三方扩展插件 */
         .item-card img { 
             width: 100%; 
             display: block; 
@@ -152,8 +152,8 @@
 
     <main>
         <div id="expired-view">
-            <h2>⚠️ 分享链接已失效</h2>
-            <p style="color: var(--sub-text); margin-top: 10px;" id="expired-msg">该作品集分享已到期，请联系作者重新获取。</p>
+            <h2>⚠️ 链接加载异常或已失效</h2>
+            <p style="color: var(--sub-text); margin-top: 10px;" id="expired-msg">无法拉取作品集数据，请检查网络或重新打开。</p>
         </div>
 
         <div id="app-view">
@@ -207,13 +207,16 @@
     </div>
 
     <script>
-        // 配置 Supabase（已经替换为你最新的 Publishable Key）
         const SUPABASE_URL = 'https://yqgkohlybphjepgbfzqm.supabase.co';
         const SUPABASE_ANON_KEY = 'sb_publishable_WlJg39rJcx_L7lO8wDG-zw_qTE4fF5o';
         
         let supabaseClient = null;
-        if (window.supabase) {
-            supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+        function getSupabase() {
+            if (!supabaseClient && typeof supabase !== 'undefined') {
+                supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+            }
+            return supabaseClient;
         }
 
         let itemsList = []; 
@@ -232,13 +235,11 @@
             }
         });
 
-        // 自动将当前未生成的草稿保存至本地
         function saveDraft() {
             const draftData = itemsList.filter(item => item.type === 'link' || (item.type === 'image' && !item.file));
             localStorage.setItem('portfolio_draft', JSON.stringify(draftData));
         }
 
-        // 读取本地草稿
         function loadDraft() {
             const saved = localStorage.getItem('portfolio_draft');
             if (saved) {
@@ -378,7 +379,8 @@
         }
 
         async function publishPortfolio() {
-            if (!supabaseClient) return alert("Supabase 客户端未初始化成功，请刷新后重试。");
+            const client = getSupabase();
+            if (!client) return alert("网络连接异常，请刷新页面后重试");
 
             const btn = document.getElementById('start-upload-btn');
             const btnText = document.getElementById('btn-text');
@@ -394,13 +396,13 @@
                         const fileName = `${Date.now()}_${Math.random().toString(36).substring(2, 8)}.${ext}`;
                         const filePath = `raw/${fileName}`;
 
-                        const { error: uploadError } = await supabaseClient.storage
+                        const { error: uploadError } = await client.storage
                             .from('user-images')
                             .upload(filePath, item.file);
 
                         if (uploadError) throw uploadError;
 
-                        const { data: urlData } = supabaseClient.storage
+                        const { data: urlData } = client.storage
                             .from('user-images')
                             .getPublicUrl(filePath);
 
@@ -417,7 +419,7 @@
                 else if (expireOption === '24h') expireAt = new Date(now.getTime() + 24 * 3600 * 1000);
                 else if (expireOption === '7d') expireAt = new Date(now.getTime() + 7 * 24 * 3600 * 1000);
 
-                const { data: record, error: dbError } = await supabaseClient
+                const { data: record, error: dbError } = await client
                     .from('portfolios')
                     .insert([{
                         images: finalItems,
@@ -476,14 +478,15 @@
             document.getElementById('admin-actions').style.display = 'none';
             document.getElementById('admin-upload-zone').style.display = 'none';
             document.getElementById('history-box').style.display = 'none';
-            document.getElementById('view-tag').innerText = "客户预览视角";
+            document.getElementById('view-tag').innerText = "作品集展示";
         }
 
         async function loadSharedPortfolio(shareId) {
-            if (!supabaseClient) return showExpiredUI("数据库未连接。");
+            const client = getSupabase();
+            if (!client) return showExpiredUI("网络库加载超时，请长按刷新重试。");
 
             try {
-                const { data: portfolio, error } = await supabaseClient
+                const { data: portfolio, error } = await client
                     .from('portfolios')
                     .select('*')
                     .eq('id', shareId)
@@ -505,7 +508,7 @@
 
             } catch (err) {
                 console.error(err);
-                showExpiredUI("加载失败，请重试。");
+                showExpiredUI("网络连接超时，请重试。");
             }
         }
 
