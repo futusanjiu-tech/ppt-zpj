@@ -78,7 +78,7 @@
         .item-card:active { cursor: grabbing; }
         .item-card.dragging { opacity: 0.4; transform: scale(0.98); }
 
-        /* 修复拖拽触发采集插件的关键代码：禁止 img 响应鼠标与选区事件 */
+        /* 禁止 img 响应鼠标与拖拽，防止触发花瓣网等采集插件 */
         .item-card img { 
             width: 100%; 
             display: block; 
@@ -103,6 +103,18 @@
             width: 28px; height: 28px; border-radius: 50%; cursor: pointer;
             display: flex; align-items: center; justify-content: center; font-size: 14px;
         }
+
+        .history-box {
+            margin-top: 40px; padding: 20px; background: var(--card-bg);
+            border: 1px solid var(--border-color); border-radius: 12px;
+        }
+        .history-title { font-size: 14px; font-weight: 600; margin-bottom: 12px; color: var(--sub-text); }
+        .history-item {
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 8px 0; border-bottom: 1px solid var(--border-color); font-size: 13px;
+        }
+        .history-item:last-child { border-bottom: none; }
+        .history-link { color: var(--accent-color); text-decoration: none; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 80%; }
 
         .modal-overlay {
             position: fixed; top: 0; left: 0; right: 0; bottom: 0;
@@ -159,6 +171,11 @@
             </div>
 
             <div class="item-list" id="item-container"></div>
+
+            <div class="history-box" id="history-box" style="display: none;">
+                <div class="history-title">最近生成的作品集链接（仅在本设备显示）：</div>
+                <div id="history-list"></div>
+            </div>
         </div>
     </main>
 
@@ -210,8 +227,27 @@
                 await loadSharedPortfolio(shareId);
             } else {
                 initDragAndDropContainer();
+                loadDraft();
+                renderHistory();
             }
         });
+
+        // 自动将当前未生成的草稿保存至本地
+        function saveDraft() {
+            const draftData = itemsList.filter(item => item.type === 'link' || (item.type === 'image' && !item.file));
+            localStorage.setItem('portfolio_draft', JSON.stringify(draftData));
+        }
+
+        // 读取本地草稿
+        function loadDraft() {
+            const saved = localStorage.getItem('portfolio_draft');
+            if (saved) {
+                try {
+                    itemsList = JSON.parse(saved);
+                    renderList();
+                } catch (e) { console.error(e); }
+            }
+        }
 
         function isImageUrl(url) {
             return /\.(jpg|jpeg|png|webp|avif|gif)($|\?)/i.test(url) || url.includes('/storage/v1/object/public/');
@@ -223,6 +259,7 @@
                 itemsList.push({ id: Date.now() + Math.random(), type: 'image', file: file, url: URL.createObjectURL(file) });
             });
             renderList();
+            saveDraft();
         }
 
         function addUrlItem() {
@@ -235,16 +272,21 @@
             itemsList.push({ id: Date.now() + Math.random(), type: type, file: null, url: url });
             input.value = '';
             renderList();
+            saveDraft();
         }
 
         function removeItem(id) {
             itemsList = itemsList.filter(item => item.id !== id);
             renderList();
+            saveDraft();
         }
 
         function clearItems() {
-            itemsList = [];
-            renderList();
+            if (confirm("确定要清空当前排版的内容吗？")) {
+                itemsList = [];
+                localStorage.removeItem('portfolio_draft');
+                renderList();
+            }
         }
 
         function initDragAndDropContainer() {
@@ -286,6 +328,7 @@
                 if (found) newOrderedList.push(found);
             });
             itemsList = newOrderedList;
+            saveDraft();
         }
 
         function renderList() {
@@ -389,6 +432,10 @@
                 document.getElementById('share-result').style.display = 'block';
                 document.getElementById('share-url-input').value = shareUrl;
 
+                // 保存生成的历史记录
+                saveHistory(shareUrl);
+                renderHistory();
+
                 btnText.innerText = "完成";
                 btn.disabled = false;
 
@@ -400,9 +447,36 @@
             }
         }
 
+        function saveHistory(url) {
+            let history = JSON.parse(localStorage.getItem('portfolio_history') || '[]');
+            history.unshift({ url, time: new Date().toLocaleDateString() });
+            history = history.slice(0, 5); // 存最近 5 条
+            localStorage.setItem('portfolio_history', JSON.stringify(history));
+        }
+
+        function renderHistory() {
+            const history = JSON.parse(localStorage.getItem('portfolio_history') || '[]');
+            const box = document.getElementById('history-box');
+            const list = document.getElementById('history-list');
+
+            if (history.length === 0) {
+                box.style.display = 'none';
+                return;
+            }
+
+            box.style.display = 'block';
+            list.innerHTML = history.map(item => `
+                <div class="history-item">
+                    <a href="${item.url}" target="_blank" class="history-link">${item.url}</a>
+                    <span style="color: var(--sub-text);">${item.time}</span>
+                </div>
+            `).join('');
+        }
+
         function switchToPreviewMode() {
             document.getElementById('admin-actions').style.display = 'none';
             document.getElementById('admin-upload-zone').style.display = 'none';
+            document.getElementById('history-box').style.display = 'none';
             document.getElementById('view-tag').innerText = "客户预览视角";
         }
 
