@@ -1,0 +1,380 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>无损作品集 - 极简展示</title>
+    <!-- 使用国内稳定 CDN 加载 Supabase SDK -->
+    <script src="https://cdn.bootcdn.net/ajax/libs/supabase-js/2.39.8/supabase.min.js"></script>
+    <style>
+        :root {
+            --bg-color: #0f0f11;
+            --card-bg: #1a1a1e;
+            --text-color: #f0f0f5;
+            --sub-text: #8e8e93;
+            --accent-color: #007aff;
+            --accent-hover: #0056b3;
+            --border-color: #2c2c30;
+            --danger-color: #ff3b30;
+        }
+
+        [data-theme="light"] {
+            --bg-color: #f5f5f7;
+            --card-bg: #ffffff;
+            --text-color: #1c1c1e;
+            --sub-text: #6e6e73;
+            --border-color: #e5e5ea;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            transition: background-color 0.3s;
+            min-height: 100vh;
+        }
+
+        header {
+            position: sticky; top: 0; z-index: 100;
+            background: rgba(15, 15, 17, 0.85);
+            backdrop-filter: blur(20px);
+            border-bottom: 1px solid var(--border-color);
+            padding: 16px 24px;
+        }
+
+        .header-content {
+            max-width: 800px; margin: 0 auto;
+            display: flex; justify-content: space-between; align-items: center;
+        }
+
+        h1 { font-size: 20px; font-weight: 600; display: flex; align-items: center; gap: 8px; }
+        .tag { font-size: 12px; padding: 2px 8px; border-radius: 12px; background: rgba(0, 122, 255, 0.15); color: var(--accent-color); }
+
+        .btn-group { display: flex; gap: 10px; }
+        .btn {
+            background: var(--card-bg); border: 1px solid var(--border-color);
+            color: var(--text-color); padding: 8px 16px; border-radius: 8px;
+            cursor: pointer; font-size: 14px; font-weight: 500;
+            transition: all 0.2s; display: inline-flex; align-items: center; gap: 6px;
+        }
+        .btn:hover { background: var(--border-color); }
+        .btn-primary { background: var(--accent-color); color: #fff; border: none; }
+        .btn-primary:hover { background: var(--accent-hover); }
+
+        main { max-width: 800px; margin: 40px auto; padding: 0 20px; }
+
+        /* 上传与草稿区 */
+        .upload-area {
+            border: 2px dashed var(--border-color); border-radius: 16px;
+            padding: 40px 20px; text-align: center; cursor: pointer;
+            margin-bottom: 30px; transition: border-color 0.2s;
+        }
+        .upload-area:hover { border-color: var(--accent-color); }
+
+        /* 图片单列竖向流 */
+        .image-list { display: flex; flex-direction: column; gap: 24px; }
+        .image-card {
+            background: var(--card-bg); border-radius: 12px; overflow: hidden;
+            border: 1px solid var(--border-color); position: relative;
+        }
+        .image-card img { width: 100%; display: block; object-fit: contain; }
+
+        /* 弹窗样式 */
+        .modal-overlay {
+            position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.7); z-index: 1000;
+            display: none; align-items: center; justify-content: center; backdrop-filter: blur(5px);
+        }
+        .modal {
+            background: var(--card-bg); width: 90%; max-width: 480px;
+            border-radius: 16px; padding: 24px; border: 1px solid var(--border-color);
+        }
+        .modal h3 { margin-bottom: 12px; }
+        .modal select, .modal input {
+            width: 100%; padding: 10px; margin: 12px 0 20px;
+            background: var(--bg-color); border: 1px solid var(--border-color);
+            color: var(--text-color); border-radius: 8px;
+        }
+
+        /* 状态信息提示 */
+        #expired-view { display: none; text-align: center; padding: 60px 20px; }
+        .loading-spinner { display: inline-block; width: 20px; height: 20px; border: 2px solid #fff; border-top-color: transparent; border-radius: 50%; animation: spin 0.8s linear infinite; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+    </style>
+</head>
+<body>
+
+    <header>
+        <div class="header-content">
+            <div>
+                <h1 id="page-title">无损作品集 <span class="tag" id="view-tag">管理模式</span></h1>
+            </div>
+            <div class="btn-group" id="admin-actions">
+                <button class="btn" onclick="clearImages()">清空照片</button>
+                <button class="btn btn-primary" onclick="openShareModal()">生成分享链接</button>
+            </div>
+        </div>
+    </header>
+
+    <main>
+        <!-- 客户视角：过期提示框 -->
+        <div id="expired-view">
+            <h2>⚠️ 分享链接已失效</h2>
+            <p style="color: var(--sub-text); margin-top: 10px;" id="expired-msg">该作品集的分享时限已到期。你可以联系摄影师重新获取有效的分享链接。</p>
+        </div>
+
+        <!-- 管理员上传与列表区 -->
+        <div id="app-view">
+            <div class="upload-area" id="drop-zone" onclick="document.getElementById('file-input').click()">
+                <p style="font-size: 16px; font-weight: 500;">点击选择照片 或 将照片拖拽至此处</p>
+                <p style="font-size: 13px; color: var(--sub-text); margin-top: 6px;">原图无损展示 · 刷新不丢失</p>
+                <input type="file" id="file-input" multiple accept="image/*" style="display: none;" onchange="handleFileSelect(event)">
+            </div>
+
+            <div class="image-list" id="image-container"></div>
+        </div>
+    </main>
+
+    <!-- 生成分享链接弹窗 -->
+    <div class="modal-overlay" id="share-modal">
+        <div class="modal">
+            <h3>生成分享链接</h3>
+            <p style="font-size: 13px; color: var(--sub-text);">照片将自动上传至云端供客户高清预览</p>
+            
+            <label style="font-size: 13px; font-weight: 500; display: block; margin-top: 16px;">设置有效时限：</label>
+            <select id="expire-select">
+                <option value="never" selected>永久有效 (无时间限制)</option>
+                <option value="1h">1 小时内有效</option>
+                <option value="24h">24 小时内有效</option>
+                <option value="7d">7 天内有效</option>
+                <option value="30d">30 天内有效</option>
+            </select>
+
+            <div id="share-result" style="display: none;">
+                <label style="font-size: 13px; font-weight: 500;">专属分享链接：</label>
+                <input type="text" id="share-url-input" readonly>
+            </div>
+
+            <div style="display: flex; gap: 10px; justify-content: flex-end;">
+                <button class="btn" onclick="closeShareModal()">取消</button>
+                <button class="btn btn-primary" id="start-upload-btn" onclick="publishPortfolio()">
+                    <span id="btn-text">生成链接</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ==========================================
+        // 1. 初始化 Supabase 实例 (请替换为你自己的配置)
+        // ==========================================
+        const SUPABASE_URL = 'https://YOUR_PROJECT_ID.supabase.co';
+        const SUPABASE_ANON_KEY = 'YOUR_ANON_KEY';
+        
+        let supabaseClient = null;
+        if (typeof supabase !== 'undefined' && SUPABASE_URL.indexOf('YOUR_PROJECT_ID') === -1) {
+            supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        }
+
+        // 本地内存图片列表
+        let localFiles = []; 
+
+        // ==========================================
+        // 2. 页面加载入口：判定是【管理模式】还是【客户预览】
+        // ==========================================
+        window.addEventListener('DOMContentLoaded', async () => {
+            const urlParams = new URLSearchParams(window.location.search);
+            const shareId = urlParams.get('share');
+
+            if (shareId) {
+                // 进入客户预览视角
+                switchToPreviewMode();
+                await loadSharedPortfolio(shareId);
+            } else {
+                // 本地拖拽上传预览模式
+                setupDragAndDrop();
+            }
+        });
+
+        // ==========================================
+        // 3. 本地上传与预览逻辑
+        // ==========================================
+        function handleFileSelect(e) {
+            const files = Array.from(e.target.files);
+            addFiles(files);
+        }
+
+        function setupDragAndDrop() {
+            const dropZone = document.getElementById('drop-zone');
+            dropZone.addEventListener('dragover', (e) => e.preventDefault());
+            dropZone.addEventListener('drop', (e) => {
+                e.preventDefault();
+                const files = Array.from(e.dataTransfer.files).filter(f => f.type.startsWith('image/'));
+                addFiles(files);
+            });
+        }
+
+        function addFiles(files) {
+            files.forEach(file => {
+                localFiles.push(file);
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    renderImageCard(e.target.result);
+                };
+                reader.readAsDataURL(file);
+            });
+        }
+
+        function renderImageCard(src) {
+            const container = document.getElementById('image-container');
+            const card = document.createElement('div');
+            card.className = 'image-card';
+            card.innerHTML = `<img src="${src}" alt="作品照片" loading="lazy">`;
+            container.appendChild(card);
+        }
+
+        function clearImages() {
+            localFiles = [];
+            document.getElementById('image-container').innerHTML = '';
+        }
+
+        // ==========================================
+        // 4. 上传至 Supabase 云端并生成分享短链
+        // ==========================================
+        function openShareModal() {
+            if (localFiles.length === 0) {
+                alert("请先添加至少一张照片！");
+                return;
+            }
+            document.getElementById('share-modal').style.display = 'flex';
+        }
+
+        function closeShareModal() {
+            document.getElementById('share-modal').style.display = 'none';
+        }
+
+        async function publishPortfolio() {
+            if (!supabaseClient) {
+                alert("请先在代码第 142 行配置你的 Supabase URL 和 Key！");
+                return;
+            }
+
+            const btn = document.getElementById('start-upload-btn');
+            const btnText = document.getElementById('btn-text');
+            btn.disabled = true;
+            btnText.innerHTML = '<span class="loading-spinner"></span> 正在上传云端...';
+
+            try {
+                const uploadedUrls = [];
+                const expireOption = document.getElementById('expire-select').value;
+
+                // A. 批量上传原图至 Supabase Storage
+                for (const file of localFiles) {
+                    const ext = file.name.split('.').pop();
+                    const fileName = `${Date.now()}_${Math.random().toString(36).substring(2, 8)}.${ext}`;
+                    const filePath = `raw/${fileName}`;
+
+                    const { error: uploadError } = await supabaseClient.storage
+                        .from('portfolio-images')
+                        .upload(filePath, file);
+
+                    if (uploadError) throw uploadError;
+
+                    const { data: urlData } = supabaseClient.storage
+                        .from('portfolio-images')
+                        .getPublicUrl(filePath);
+
+                    uploadedUrls.push(urlData.publicUrl);
+                }
+
+                // B. 计算到期时间
+                let expireAt = null;
+                const now = new Date();
+                if (expireOption === '1h') expireAt = new Date(now.getTime() + 1 * 3600 * 1000);
+                else if (expireOption === '24h') expireAt = new Date(now.getTime() + 24 * 3600 * 1000);
+                else if (expireOption === '7d') expireAt = new Date(now.getTime() + 7 * 24 * 3600 * 1000);
+                else if (expireOption === '30d') expireAt = new Date(now.getTime() + 30 * 24 * 3600 * 1000);
+
+                // C. 写入 Supabase 数据库
+                const { data: record, error: dbError } = await supabaseClient
+                    .from('portfolios')
+                    .insert([{
+                        images: uploadedUrls,
+                        expire_at: expireAt ? expireAt.toISOString() : null
+                    }])
+                    .select()
+                    .single();
+
+                if (dbError) throw dbError;
+
+                // D. 成功生成分享链接
+                const shareUrl = `${window.location.origin}${window.location.pathname}?share=${record.id}`;
+                document.getElementById('share-result').style.display = 'block';
+                document.getElementById('share-url-input').value = shareUrl;
+                
+                btnText.innerText = "重新生成";
+                btn.disabled = false;
+
+            } catch (err) {
+                console.error(err);
+                alert("发布失败: " + err.message);
+                btn.disabled = false;
+                btnText.innerText = "生成链接";
+            }
+        }
+
+        // ==========================================
+        // 5. 客户侧解析 `?share=ID` 并校验时效
+        // ==========================================
+        function switchToPreviewMode() {
+            document.getElementById('admin-actions').style.display = 'none';
+            document.getElementById('drop-zone').style.display = 'none';
+            document.getElementById('view-tag').innerText = "客户预览视角";
+        }
+
+        async function loadSharedPortfolio(shareId) {
+            if (!supabaseClient) {
+                showExpiredUI("系统未配置云端数据库，无法加载分享链接。");
+                return;
+            }
+
+            try {
+                const { data: portfolio, error } = await supabaseClient
+                    .from('portfolios')
+                    .select('*')
+                    .eq('id', shareId)
+                    .single();
+
+                if (error || !portfolio) {
+                    showExpiredUI("作品集不存在或已被删除。");
+                    return;
+                }
+
+                // 校验过期时间
+                if (portfolio.expire_at) {
+                    const expireTime = new Date(portfolio.expire_at).getTime();
+                    if (Date.now() > expireTime) {
+                        showExpiredUI("该作品集的分享时限已到期。你可以联系摄影师重新获取有效的分享链接。");
+                        return;
+                    }
+                }
+
+                // 渲染云端高清图片流
+                document.getElementById('image-container').innerHTML = '';
+                portfolio.images.forEach(url => renderImageCard(url));
+
+            } catch (err) {
+                console.error(err);
+                showExpiredUI("加载失败，请检查网络连接。");
+            }
+        }
+
+        function showExpiredUI(msg) {
+            document.getElementById('app-view').style.display = 'none';
+            document.getElementById('expired-view').style.display = 'block';
+            if (msg) document.getElementById('expired-msg').innerText = msg;
+        }
+    </script>
+</body>
+</html>
