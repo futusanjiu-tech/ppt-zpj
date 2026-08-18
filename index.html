@@ -4,8 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>无损作品集 - 极简展示</title>
-    <!-- 使用国内稳定 CDN 加载 Supabase SDK -->
-    <script src="https://cdn.bootcdn.net/ajax/libs/supabase-js/2.39.8/supabase.min.js"></script>
+    <!-- 升级至最新版 Supabase SDK，全面支持 sb_publishable_ 格式密钥 -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
     <style>
         :root {
             --bg-color: #0f0f11;
@@ -207,13 +207,13 @@
     </div>
 
     <script>
-        // 配置 Supabase
+        // 配置 Supabase（已经替换为你最新的 Publishable Key）
         const SUPABASE_URL = 'https://yqgkohlybphjepgbfzqm.supabase.co';
-        const SUPABASE_ANON_KEY = 'YOUR_ANON_KEY'; // 记得替换为你的真实 anon public key
+        const SUPABASE_ANON_KEY = 'sb_publishable_WlJg39rJcx_L7lO8wDG-zw_qTE4fF5o';
         
         let supabaseClient = null;
-        if (typeof supabase !== 'undefined' && !SUPABASE_ANON_KEY.includes('YOUR_ANON_KEY')) {
-            supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        if (window.supabase) {
+            supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
         }
 
         let itemsList = []; 
@@ -378,7 +378,7 @@
         }
 
         async function publishPortfolio() {
-            if (!supabaseClient) return alert("请先在代码中配置完整的 Supabase Key");
+            if (!supabaseClient) return alert("Supabase 客户端未初始化成功，请刷新后重试。");
 
             const btn = document.getElementById('start-upload-btn');
             const btnText = document.getElementById('btn-text');
@@ -432,7 +432,6 @@
                 document.getElementById('share-result').style.display = 'block';
                 document.getElementById('share-url-input').value = shareUrl;
 
-                // 保存生成的历史记录
                 saveHistory(shareUrl);
                 renderHistory();
 
@@ -450,7 +449,7 @@
         function saveHistory(url) {
             let history = JSON.parse(localStorage.getItem('portfolio_history') || '[]');
             history.unshift({ url, time: new Date().toLocaleDateString() });
-            history = history.slice(0, 5); // 存最近 5 条
+            history = history.slice(0, 5);
             localStorage.setItem('portfolio_history', JSON.stringify(history));
         }
 
