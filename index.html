@@ -204,14 +204,21 @@
     </div>
 
     <script>
-        const SUPABASE_URL = 'https://yqgkohlybphjepgbfzqm.supabase.co';
+        // 将 API 请求走同源 Vercel 代理，彻底规避国内网络对 Supabase 域名的屏蔽
+        const API_BASE = window.location.origin + '/sp-api';
         const SUPABASE_ANON_KEY = 'sb_publishable_WlJg39rJcx_L7lO8wDG-zw_qTE4fF5o';
 
         let itemsList = []; 
 
+        function getShareId() {
+            const searchParams = new URLSearchParams(window.location.search);
+            if (searchParams.get('share')) return searchParams.get('share');
+            const match = window.location.href.match(/[?&]share=([^&]+)/);
+            return match ? match[1] : null;
+        }
+
         window.addEventListener('DOMContentLoaded', async () => {
-            const urlParams = new URLSearchParams(window.location.search);
-            const shareId = urlParams.get('share');
+            const shareId = getShareId();
 
             if (shareId) {
                 switchToPreviewMode();
@@ -239,7 +246,7 @@
         }
 
         function isImageUrl(url) {
-            return /\.(jpg|jpeg|png|webp|avif|gif)($|\?)/i.test(url) || url.includes('/storage/v1/object/public/');
+            return /\.(jpg|jpeg|png|webp|avif|gif)($|\?)/i.test(url) || url.includes('/storage/v1/object/');
         }
 
         function handleFileSelect(e) {
@@ -366,7 +373,6 @@
             document.getElementById('share-modal').style.display = 'none';
         }
 
-        // 使用原生 Fetch API 替代 Supabase SDK，实现零加载延迟与全面密钥兼容
         async function publishPortfolio() {
             const btn = document.getElementById('start-upload-btn');
             const btnText = document.getElementById('btn-text');
@@ -382,7 +388,7 @@
                         const fileName = `${Date.now()}_${Math.random().toString(36).substring(2, 8)}.${ext}`;
                         const filePath = `raw/${fileName}`;
 
-                        const uploadRes = await fetch(`${SUPABASE_URL}/storage/v1/object/user-images/${filePath}`, {
+                        const uploadRes = await fetch(`${API_BASE}/storage/v1/object/user-images/${filePath}`, {
                             method: 'POST',
                             headers: {
                                 'apikey': SUPABASE_ANON_KEY,
@@ -394,7 +400,7 @@
 
                         if (!uploadRes.ok) throw new Error("图片上传失败");
 
-                        const publicUrl = `${SUPABASE_URL}/storage/v1/object/public/user-images/${filePath}`;
+                        const publicUrl = `${API_BASE}/storage/v1/object/public/user-images/${filePath}`;
                         finalItems.push({ type: 'image', url: publicUrl });
                     } else {
                         finalItems.push({ type: item.type, url: item.url });
@@ -408,7 +414,7 @@
                 else if (expireOption === '24h') expireAt = new Date(now.getTime() + 24 * 3600 * 1000);
                 else if (expireOption === '7d') expireAt = new Date(now.getTime() + 7 * 24 * 3600 * 1000);
 
-                const dbRes = await fetch(`${SUPABASE_URL}/rest/v1/portfolios`, {
+                const dbRes = await fetch(`${API_BASE}/rest/v1/portfolios`, {
                     method: 'POST',
                     headers: {
                         'apikey': SUPABASE_ANON_KEY,
@@ -483,7 +489,7 @@
 
         async function loadSharedPortfolio(shareId) {
             try {
-                const res = await fetch(`${SUPABASE_URL}/rest/v1/portfolios?id=eq.${shareId}&select=*`, {
+                const res = await fetch(`${API_BASE}/rest/v1/portfolios?id=eq.${shareId}&select=*`, {
                     headers: {
                         'apikey': SUPABASE_ANON_KEY,
                         'Authorization': `Bearer ${SUPABASE_ANON_KEY}`
