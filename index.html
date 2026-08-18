@@ -15,7 +15,6 @@
             --accent-color: #007aff;
             --accent-hover: #0056b3;
             --border-color: #2c2c30;
-            --danger-color: #ff3b30;
         }
 
         * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -55,7 +54,6 @@
 
         main { max-width: 800px; margin: 40px auto; padding: 0 20px; }
 
-        /* 操作上传区 */
         .upload-area {
             border: 2px dashed var(--border-color); border-radius: 16px;
             padding: 30px 20px; text-align: center; margin-bottom: 30px;
@@ -63,14 +61,13 @@
         }
 
         .link-input-group {
-            display: flex; gap: 8px; width: 100%; max-width: 500px;
+            display: flex; gap: 8px; width: 100%; max-width: 550px;
         }
         .link-input-group input {
             flex: 1; padding: 10px 14px; background: var(--bg-color);
             border: 1px solid var(--border-color); border-radius: 8px; color: var(--text-color);
         }
 
-        /* 展现流 & 拖拽样式 */
         .item-list { display: flex; flex-direction: column; gap: 24px; }
         
         .item-card {
@@ -81,9 +78,16 @@
         .item-card:active { cursor: grabbing; }
         .item-card.dragging { opacity: 0.4; transform: scale(0.98); }
 
-        .item-card img { width: 100%; display: block; object-fit: contain; }
+        /* 修复拖拽触发采集插件的关键代码：禁止 img 响应鼠标与选区事件 */
+        .item-card img { 
+            width: 100%; 
+            display: block; 
+            object-fit: contain; 
+            pointer-events: none; 
+            user-select: none;
+            -webkit-user-drag: none;
+        }
 
-        /* 网页链接卡片样式 */
         .link-card-body {
             padding: 20px; display: flex; justify-content: space-between; align-items: center;
             text-decoration: none; color: var(--text-color); background: rgba(255,255,255,0.02);
@@ -100,7 +104,6 @@
             display: flex; align-items: center; justify-content: center; font-size: 14px;
         }
 
-        /* 弹窗样式 */
         .modal-overlay {
             position: fixed; top: 0; left: 0; right: 0; bottom: 0;
             background: rgba(0,0,0,0.7); z-index: 1000;
@@ -136,15 +139,12 @@
     </header>
 
     <main>
-        <!-- 过期/失效提示 -->
         <div id="expired-view">
             <h2>⚠️ 分享链接已失效</h2>
             <p style="color: var(--sub-text); margin-top: 10px;" id="expired-msg">该作品集分享已到期，请联系作者重新获取。</p>
         </div>
 
-        <!-- 主内容区域 -->
         <div id="app-view">
-            <!-- 增加/上传区域 -->
             <div class="upload-area" id="admin-upload-zone">
                 <div onclick="document.getElementById('file-input').click()" style="cursor: pointer;">
                     <p style="font-size: 16px; font-weight: 500;">点击选择照片 或 将照片拖拽至此处</p>
@@ -153,21 +153,19 @@
                 <input type="file" id="file-input" multiple accept="image/*" style="display: none;" onchange="handleFileSelect(event)">
 
                 <div class="link-input-group">
-                    <input type="url" id="link-url-input" placeholder="输入网页链接 (例如 https://...)">
-                    <button class="btn" onclick="addLinkItem()">添加链接卡片</button>
+                    <input type="url" id="link-url-input" placeholder="粘贴网页链接或图片 URL (例如 https://...)">
+                    <button class="btn" onclick="addUrlItem()">添加链接/图片</button>
                 </div>
             </div>
 
-            <!-- 展示列表（可拖拽排序） -->
             <div class="item-list" id="item-container"></div>
         </div>
     </main>
 
-    <!-- 生成分享链接弹窗 -->
     <div class="modal-overlay" id="share-modal">
         <div class="modal">
             <h3>生成分享链接</h3>
-            <p style="font-size: 13px; color: var(--sub-text); margin-top: 4px;">照片和链接将自动上传至云端供所有人查看</p>
+            <p style="font-size: 13px; color: var(--sub-text); margin-top: 4px;">图片和网页链接将保存至云端供客户访问</p>
             
             <label style="font-size: 13px; font-weight: 500; display: block; margin-top: 16px;">设置有效时间：</label>
             <select id="expire-select">
@@ -192,18 +190,15 @@
     </div>
 
     <script>
-        // ==========================================
-        // 1. Supabase 配置 (请填入你的项目 Key)
-        // ==========================================
-        const SUPABASE_URL = 'https://YOUR_PROJECT_ID.supabase.co';
-        const SUPABASE_ANON_KEY = 'YOUR_ANON_KEY';
+        // 配置 Supabase
+        const SUPABASE_URL = 'https://yqgkohlybphjepgbfzqm.supabase.co';
+        const SUPABASE_ANON_KEY = 'YOUR_ANON_KEY'; // 记得替换为你的真实 anon public key
         
         let supabaseClient = null;
-        if (typeof supabase !== 'undefined' && !SUPABASE_URL.includes('YOUR_PROJECT_ID')) {
+        if (typeof supabase !== 'undefined' && !SUPABASE_ANON_KEY.includes('YOUR_ANON_KEY')) {
             supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
         }
 
-        // 本地混合数据列表: [{ id, type: 'image'|'link', file: File|null, url: string, title?: string }]
         let itemsList = []; 
 
         window.addEventListener('DOMContentLoaded', async () => {
@@ -218,24 +213,26 @@
             }
         });
 
-        // ==========================================
-        // 2. 各种类型的添加逻辑 (图片 / 链接)
-        // ==========================================
+        function isImageUrl(url) {
+            return /\.(jpg|jpeg|png|webp|avif|gif)($|\?)/i.test(url) || url.includes('/storage/v1/object/public/');
+        }
+
         function handleFileSelect(e) {
             const files = Array.from(e.target.files);
             files.forEach(file => {
-                const item = { id: Date.now() + Math.random(), type: 'image', file: file, url: URL.createObjectURL(file) };
-                itemsList.push(item);
+                itemsList.push({ id: Date.now() + Math.random(), type: 'image', file: file, url: URL.createObjectURL(file) });
             });
             renderList();
         }
 
-        function addLinkItem() {
+        function addUrlItem() {
             const input = document.getElementById('link-url-input');
             const url = input.value.trim();
-            if (!url) return alert("请输入有效网址");
+            if (!url) return alert("请输入有效 URL");
             
-            itemsList.push({ id: Date.now() + Math.random(), type: 'link', file: null, url: url });
+            const type = isImageUrl(url) ? 'image' : 'link';
+
+            itemsList.push({ id: Date.now() + Math.random(), type: type, file: null, url: url });
             input.value = '';
             renderList();
         }
@@ -250,9 +247,6 @@
             renderList();
         }
 
-        // ==========================================
-        // 3. 拖拽排序功能 (Drag & Drop)
-        // ==========================================
         function initDragAndDropContainer() {
             const container = document.getElementById('item-container');
 
@@ -294,9 +288,6 @@
             itemsList = newOrderedList;
         }
 
-        // ==========================================
-        // 4. 界面渲染
-        // ==========================================
         function renderList() {
             const container = document.getElementById('item-container');
             container.innerHTML = '';
@@ -307,7 +298,6 @@
                 card.draggable = true;
                 card.dataset.id = item.id;
 
-                // 拖拽事件监听
                 card.addEventListener('dragstart', () => card.classList.add('dragging'));
                 card.addEventListener('dragend', () => {
                     card.classList.remove('dragging');
@@ -317,7 +307,7 @@
                 if (item.type === 'image') {
                     card.innerHTML = `
                         <div class="card-actions"><button class="icon-btn" onclick="removeItem(${item.id})">✕</button></div>
-                        <img src="${item.url}" alt="作品图片" loading="lazy">
+                        <img src="${item.url}" alt="作品图片" loading="lazy" draggable="false">
                     `;
                 } else {
                     card.innerHTML = `
@@ -335,11 +325,8 @@
             });
         }
 
-        // ==========================================
-        // 5. 上传至 Supabase & 生成链接
-        // ==========================================
         function openShareModal() {
-            if (itemsList.length === 0) return alert("请先添加图片或链接！");
+            if (itemsList.length === 0) return alert("请先添加内容！");
             document.getElementById('share-modal').style.display = 'flex';
         }
 
@@ -348,38 +335,35 @@
         }
 
         async function publishPortfolio() {
-            if (!supabaseClient) return alert("请先在代码中配置 Supabase URL 和 Key");
+            if (!supabaseClient) return alert("请先在代码中配置完整的 Supabase Key");
 
             const btn = document.getElementById('start-upload-btn');
             const btnText = document.getElementById('btn-text');
             btn.disabled = true;
-            btnText.innerHTML = '<span class="loading-spinner"></span> 上传中...';
+            btnText.innerHTML = '<span class="loading-spinner"></span> 处理中...';
 
             try {
                 const finalItems = [];
 
                 for (const item of itemsList) {
                     if (item.type === 'image' && item.file) {
-                        // 上传本地图片文件到 Supabase Storage
                         const ext = item.file.name.split('.').pop();
                         const fileName = `${Date.now()}_${Math.random().toString(36).substring(2, 8)}.${ext}`;
                         const filePath = `raw/${fileName}`;
 
                         const { error: uploadError } = await supabaseClient.storage
-                            .from('portfolio-images')
+                            .from('user-images')
                             .upload(filePath, item.file);
 
                         if (uploadError) throw uploadError;
 
                         const { data: urlData } = supabaseClient.storage
-                            .from('portfolio-images')
+                            .from('user-images')
                             .getPublicUrl(filePath);
 
                         finalItems.push({ type: 'image', url: urlData.publicUrl });
-                    } else if (item.type === 'link') {
-                        finalItems.push({ type: 'link', url: item.url });
                     } else {
-                        finalItems.push({ type: 'image', url: item.url });
+                        finalItems.push({ type: item.type, url: item.url });
                     }
                 }
 
@@ -390,11 +374,10 @@
                 else if (expireOption === '24h') expireAt = new Date(now.getTime() + 24 * 3600 * 1000);
                 else if (expireOption === '7d') expireAt = new Date(now.getTime() + 7 * 24 * 3600 * 1000);
 
-                // 写入 portfolios 表
                 const { data: record, error: dbError } = await supabaseClient
                     .from('portfolios')
                     .insert([{
-                        images: finalItems, // 注意：可以在 JSON 字段中混合存图片和链接
+                        images: finalItems,
                         expire_at: expireAt ? expireAt.toISOString() : null
                     }])
                     .select()
@@ -417,9 +400,6 @@
             }
         }
 
-        // ==========================================
-        // 6. 预览读取
-        // ==========================================
         function switchToPreviewMode() {
             document.getElementById('admin-actions').style.display = 'none';
             document.getElementById('admin-upload-zone').style.display = 'none';
@@ -427,7 +407,7 @@
         }
 
         async function loadSharedPortfolio(shareId) {
-            if (!supabaseClient) return showExpiredUI("后台尚未配置数据库连接。");
+            if (!supabaseClient) return showExpiredUI("数据库未连接。");
 
             try {
                 const { data: portfolio, error } = await supabaseClient
@@ -442,10 +422,9 @@
                     return showExpiredUI("该作品集的分享时限已到期。");
                 }
 
-                // 读取显示
                 itemsList = (portfolio.images || []).map((item, idx) => ({
                     id: idx,
-                    type: item.type || 'image',
+                    type: item.type || (isImageUrl(item.url || item) ? 'image' : 'link'),
                     url: item.url || item
                 }));
 
@@ -453,7 +432,7 @@
 
             } catch (err) {
                 console.error(err);
-                showExpiredUI("加载失败，请检查网络。");
+                showExpiredUI("加载失败，请重试。");
             }
         }
 
@@ -467,7 +446,7 @@
                 card.style.cursor = 'default';
 
                 if (item.type === 'image') {
-                    card.innerHTML = `<img src="${item.url}" alt="作品图片" loading="lazy">`;
+                    card.innerHTML = `<img src="${item.url}" alt="作品图片" loading="lazy" draggable="false">`;
                 } else {
                     card.innerHTML = `
                         <a href="${item.url}" target="_blank" class="link-card-body">
