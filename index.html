@@ -1,557 +1,236 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>无损作品集 - 极简展示</title>
-    <style>
-        :root {
-            --bg-color: #0f0f11;
-            --card-bg: #1a1a1e;
-            --text-color: #f0f0f5;
-            --sub-text: #8e8e93;
-            --accent-color: #007aff;
-            --accent-hover: #0056b3;
-            --border-color: #2c2c30;
-        }
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>作品集展示</title>
+  <style>
+    /* 基础重置与平滑滚动 */
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+    html {
+      scroll-behavior: smooth;
+      background-color: #121212;
+      color: #ffffff;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    }
 
-        * { box-sizing: border-box; margin: 0; padding: 0; }
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-            background-color: var(--bg-color);
-            color: var(--text-color);
-            min-height: 100vh;
-        }
+    /* 顶部 Header 样式 */
+    header {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 16px 20px;
+      background-color: #1a1a1a;
+      border-bottom: 1px solid #2a2a2a;
+    }
+    header h1 {
+      font-size: 20px;
+      font-weight: 700;
+    }
+    .badge {
+      font-size: 12px;
+      padding: 3px 10px;
+      background-color: #004080;
+      color: #3399ff;
+      border-radius: 12px;
+      font-weight: 600;
+    }
 
-        header {
-            position: sticky; top: 0; z-index: 100;
-            background: rgba(15, 15, 17, 0.85);
-            backdrop-filter: blur(20px);
-            border-bottom: 1px solid var(--border-color);
-            padding: 16px 24px;
-        }
+    /* 分类吸顶锚点导航栏 */
+    .category-nav {
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      display: flex;
+      gap: 10px;
+      padding: 12px 16px;
+      background: rgba(18, 18, 18, 0.85);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+      overflow-x: auto;
+      white-space: nowrap;
+      scrollbar-width: none; /* 隐藏滚动条 (Firefox) */
+    }
+    .category-nav::-webkit-scrollbar {
+      display: none; /* 隐藏滚动条 (Chrome/Safari) */
+    }
+    .nav-item {
+      color: #8e8e93;
+      text-decoration: none;
+      font-size: 14px;
+      padding: 6px 16px;
+      border-radius: 20px;
+      background: rgba(255, 255, 255, 0.06);
+      transition: all 0.2s ease;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .nav-item:hover, .nav-item.active {
+      color: #ffffff;
+      background: #007aff;
+    }
 
-        .header-content {
-            max-width: 800px; margin: 0 auto;
-            display: flex; justify-content: space-between; align-items: center;
-        }
+    /* 作品内容区域 */
+    main {
+      padding: 16px;
+    }
+    .category-section {
+      scroll-margin-top: 60px; /* 避免锚点跳转时被吸顶导航遮挡 */
+      margin-bottom: 32px;
+    }
+    .category-title {
+      font-size: 18px;
+      font-weight: 600;
+      margin-bottom: 12px;
+      color: #e5e5ea;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .image-grid {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+    .image-grid img {
+      width: 100%;
+      height: auto;
+      border-radius: 8px;
+      display: block;
+      background-color: #1c1c1e;
+    }
 
-        h1 { font-size: 20px; font-weight: 600; display: flex; align-items: center; gap: 8px; }
-        .tag { font-size: 12px; padding: 2px 8px; border-radius: 12px; background: rgba(0, 122, 255, 0.15); color: var(--accent-color); }
-
-        .btn-group { display: flex; gap: 10px; }
-        .btn {
-            background: var(--card-bg); border: 1px solid var(--border-color);
-            color: var(--text-color); padding: 8px 16px; border-radius: 8px;
-            cursor: pointer; font-size: 14px; font-weight: 500;
-            transition: all 0.2s; display: inline-flex; align-items: center; gap: 6px;
-        }
-        .btn:hover { background: var(--border-color); }
-        .btn-primary { background: var(--accent-color); color: #fff; border: none; }
-        .btn-primary:hover { background: var(--accent-hover); }
-
-        main { max-width: 800px; margin: 40px auto; padding: 0 20px; }
-
-        .upload-area {
-            border: 2px dashed var(--border-color); border-radius: 16px;
-            padding: 30px 20px; text-align: center; margin-bottom: 30px;
-            display: flex; flex-direction: column; gap: 16px; align-items: center;
-        }
-
-        .link-input-group {
-            display: flex; gap: 8px; width: 100%; max-width: 550px;
-        }
-        .link-input-group input {
-            flex: 1; padding: 10px 14px; background: var(--bg-color);
-            border: 1px solid var(--border-color); border-radius: 8px; color: var(--text-color);
-        }
-
-        .item-list { display: flex; flex-direction: column; gap: 24px; }
-        
-        .item-card {
-            background: var(--card-bg); border-radius: 12px; overflow: hidden;
-            border: 1px solid var(--border-color); position: relative;
-            cursor: grab; transition: transform 0.2s, opacity 0.2s;
-        }
-        .item-card:active { cursor: grabbing; }
-        .item-card.dragging { opacity: 0.4; transform: scale(0.98); }
-
-        .item-card img { 
-            width: 100%; 
-            display: block; 
-            object-fit: contain; 
-            pointer-events: none; 
-            user-select: none;
-            -webkit-user-drag: none;
-        }
-
-        .link-card-body {
-            padding: 20px; display: flex; justify-content: space-between; align-items: center;
-            text-decoration: none; color: var(--text-color); background: rgba(255,255,255,0.02);
-        }
-        .link-card-body:hover { background: rgba(255,255,255,0.05); }
-
-        .card-actions {
-            position: absolute; top: 12px; right: 12px; z-index: 10;
-            display: flex; gap: 6px;
-        }
-        .icon-btn {
-            background: rgba(0,0,0,0.6); color: #fff; border: none;
-            width: 28px; height: 28px; border-radius: 50%; cursor: pointer;
-            display: flex; align-items: center; justify-content: center; font-size: 14px;
-        }
-
-        .history-box {
-            margin-top: 40px; padding: 20px; background: var(--card-bg);
-            border: 1px solid var(--border-color); border-radius: 12px;
-        }
-        .history-title { font-size: 14px; font-weight: 600; margin-bottom: 12px; color: var(--sub-text); }
-        .history-item {
-            display: flex; justify-content: space-between; align-items: center;
-            padding: 8px 0; border-bottom: 1px solid var(--border-color); font-size: 13px;
-        }
-        .history-item:last-child { border-bottom: none; }
-        .history-link { color: var(--accent-color); text-decoration: none; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 80%; }
-
-        .modal-overlay {
-            position: fixed; top: 0; left: 0; right: 0; bottom: 0;
-            background: rgba(0,0,0,0.7); z-index: 1000;
-            display: none; align-items: center; justify-content: center; backdrop-filter: blur(5px);
-        }
-        .modal {
-            background: var(--card-bg); width: 90%; max-width: 480px;
-            border-radius: 16px; padding: 24px; border: 1px solid var(--border-color);
-        }
-        .modal select, .modal input {
-            width: 100%; padding: 10px; margin: 12px 0 20px;
-            background: var(--bg-color); border: 1px solid var(--border-color);
-            color: var(--text-color); border-radius: 8px;
-        }
-
-        #expired-view { display: none; text-align: center; padding: 60px 20px; }
-        .loading-spinner { display: inline-block; width: 16px; height: 16px; border: 2px solid #fff; border-top-color: transparent; border-radius: 50%; animation: spin 0.8s linear infinite; }
-        @keyframes spin { to { transform: rotate(360deg); } }
-    </style>
+    /* 加载状态提示 */
+    #loading {
+      text-align: center;
+      padding: 40px 0;
+      color: #8e8e93;
+    }
+  </style>
 </head>
 <body>
 
-    <header>
-        <div class="header-content">
-            <div>
-                <h1>无损作品集 <span class="tag" id="view-tag">管理模式</span></h1>
-            </div>
-            <div class="btn-group" id="admin-actions">
-                <button class="btn" onclick="clearItems()">清空内容</button>
-                <button class="btn btn-primary" onclick="openShareModal()">生成分享链接</button>
-            </div>
-        </div>
-    </header>
+  <!-- 顶部 Header（管理模式下显示，分享模式下会自动隐藏） -->
+  <header id="site-header">
+    <h1>无损作品集</h1>
+    <span class="badge">管理模式</span>
+  </header>
 
-    <main>
-        <div id="expired-view">
-            <h2>⚠️ 链接已失效或打不开</h2>
-            <p style="color: var(--sub-text); margin-top: 10px;" id="expired-msg">无法拉取作品集数据，请确认链接是否完整。</p>
-        </div>
+  <!-- 锚点分类导航栏 -->
+  <nav class="category-nav" id="category-nav">
+    <a href="#cat-3d" class="nav-item">🎨 3D Visual</a>
+    <a href="#cat-ui" class="nav-item">📱 UI Design</a>
+    <a href="#cat-ip" class="nav-item">🧸 IP & Assets</a>
+  </nav>
 
-        <div id="app-view">
-            <div class="upload-area" id="admin-upload-zone">
-                <div onclick="document.getElementById('file-input').click()" style="cursor: pointer;">
-                    <p style="font-size: 16px; font-weight: 500;">点击选择照片 或 将照片拖拽至此处</p>
-                    <p style="font-size: 13px; color: var(--sub-text); margin-top: 4px;">支持长图无损渲染 · 按住卡片可上下拖拽排序</p>
-                </div>
-                <input type="file" id="file-input" multiple accept="image/*" style="display: none;" onchange="handleFileSelect(event)">
+  <!-- 主体图片展示区 -->
+  <main id="portfolio-container">
+    <div id="loading">正在加载作品内容...</div>
+  </main>
 
-                <div class="link-input-group">
-                    <input type="url" id="link-url-input" placeholder="粘贴网页链接或图片 URL (例如 https://...)">
-                    <button class="btn" onclick="addUrlItem()">添加链接/图片</button>
-                </div>
-            </div>
+  <script>
+    // 1. 初始化页面参数与状态
+    const urlParams = new URLSearchParams(window.location.search);
+    const shareId = urlParams.get('share');
+    const isShareMode = !!shareId;
 
-            <div class="item-list" id="item-container"></div>
+    // 2. 如果是分享模式，隐藏 Header 标题文字与标签
+    if (isShareMode) {
+      const headerElem = document.getElementById('site-header');
+      if (headerElem) {
+        headerElem.style.display = 'none';
+      }
+    }
 
-            <div class="history-box" id="history-box" style="display: none;">
-                <div class="history-title">最近生成的作品集链接（仅在本设备显示）：</div>
-                <div id="history-list"></div>
-            </div>
-        </div>
-    </main>
-
-    <div class="modal-overlay" id="share-modal">
-        <div class="modal">
-            <h3>生成分享链接</h3>
-            <p style="font-size: 13px; color: var(--sub-text); margin-top: 4px;">图片和网页链接将保存至云端供客户访问</p>
-            
-            <label style="font-size: 13px; font-weight: 500; display: block; margin-top: 16px;">设置有效时间：</label>
-            <select id="expire-select">
-                <option value="never" selected>永久有效</option>
-                <option value="1h">1 小时</option>
-                <option value="24h">24 小时</option>
-                <option value="7d">7 天</option>
-            </select>
-
-            <div id="share-result" style="display: none;">
-                <label style="font-size: 13px; font-weight: 500;">分享链接：</label>
-                <input type="text" id="share-url-input" readonly>
-            </div>
-
-            <div style="display: flex; gap: 10px; justify-content: flex-end;">
-                <button class="btn" onclick="closeShareModal()">取消</button>
-                <button class="btn btn-primary" id="start-upload-btn" onclick="publishPortfolio()">
-                    <span id="btn-text">生成链接</span>
-                </button>
-            </div>
-        </div>
-    </div>
-
-    <script>
-        // 将 API 请求走同源 Vercel 代理，彻底规避国内网络对 Supabase 域名的屏蔽
-        const API_BASE = window.location.origin + '/sp-api';
-        const SUPABASE_ANON_KEY = 'sb_publishable_WlJg39rJcx_L7lO8wDG-zw_qTE4fF5o';
-
-        let itemsList = []; 
-
-        function getShareId() {
-            const searchParams = new URLSearchParams(window.location.search);
-            if (searchParams.get('share')) return searchParams.get('share');
-            const match = window.location.href.match(/[?&]share=([^&]+)/);
-            return match ? match[1] : null;
+    // 3. 从 Vercel Rewrites 代理接口获取数据
+    async function fetchPortfolioData() {
+      const container = document.getElementById('portfolio-container');
+      
+      try {
+        // 构建请求路径（如果带有 shareId 则查询对应记录，否则默认获取最新）
+        let apiUrl = '/sp-api/rest/v1/portfolios?select=*&order=created_at.desc&limit=1';
+        if (shareId) {
+          apiUrl = `/sp-api/rest/v1/portfolios?id=eq.${shareId}&select=*`;
         }
 
-        window.addEventListener('DOMContentLoaded', async () => {
-            const shareId = getShareId();
-
-            if (shareId) {
-                switchToPreviewMode();
-                await loadSharedPortfolio(shareId);
-            } else {
-                initDragAndDropContainer();
-                loadDraft();
-                renderHistory();
-            }
+        const response = await fetch(apiUrl, {
+          headers: {
+            'apikey': 'sb_publishable_key_here', // 替换为你的 Supabase Publishable Key
+            'Authorization': 'Bearer sb_publishable_key_here'
+          }
         });
 
-        function saveDraft() {
-            const draftData = itemsList.filter(item => item.type === 'link' || (item.type === 'image' && !item.file));
-            localStorage.setItem('portfolio_draft', JSON.stringify(draftData));
+        if (!response.ok) throw new Error('数据请求失败');
+        const data = await response.json();
+
+        if (!data || data.length === 0) {
+          container.innerHTML = '<div id="loading">暂无作品内容</div>';
+          return;
         }
 
-        function loadDraft() {
-            const saved = localStorage.getItem('portfolio_draft');
-            if (saved) {
-                try {
-                    itemsList = JSON.parse(saved);
-                    renderList();
-                } catch (e) { console.error(e); }
-            }
-        }
+        renderPortfolio(data[0].images);
+      } catch (err) {
+        console.error(err);
+        container.innerHTML = '<div id="loading">内容加载失败，请刷新重试</div>';
+      }
+    }
 
-        function isImageUrl(url) {
-            return /\.(jpg|jpeg|png|webp|avif|gif)($|\?)/i.test(url) || url.includes('/storage/v1/object/');
-        }
+    // 4. 动态渲染图片分类列表
+    function renderPortfolio(imagesData) {
+      const container = document.getElementById('portfolio-container');
+      container.innerHTML = ''; // 清空 loading
 
-        function handleFileSelect(e) {
-            const files = Array.from(e.target.files);
-            files.forEach(file => {
-                itemsList.push({ id: Date.now() + Math.random(), type: 'image', file: file, url: URL.createObjectURL(file) });
-            });
-            renderList();
-            saveDraft();
-        }
+      // 假设 imagesData 数据结构支持按 category 分组，或为格式化的 JSON
+      // 示例数据兼容处理：如果为纯数组直接渲染，如果包含分类则按组渲染
+      if (Array.isArray(imagesData)) {
+        // 兼容单组图片格式
+        const section = document.createElement('section');
+        section.className = 'category-section';
+        section.id = 'cat-3d';
+        
+        const grid = document.createElement('div');
+        grid.className = 'image-grid';
+        
+        imagesData.forEach(url => {
+          const img = document.createElement('img');
+          img.src = url;
+          img.loading = 'lazy';
+          grid.appendChild(img);
+        });
 
-        function addUrlItem() {
-            const input = document.getElementById('link-url-input');
-            const url = input.value.trim();
-            if (!url) return alert("请输入有效 URL");
-            
-            const type = isImageUrl(url) ? 'image' : 'link';
+        section.appendChild(grid);
+        container.appendChild(section);
+      } else if (typeof imagesData === 'object') {
+        // 兼容多分类 JSON 格式: { "cat-3d": ["url1", "url2"], "cat-ui": ["url3"] }
+        Object.keys(imagesData).forEach(catId => {
+          const section = document.createElement('section');
+          section.className = 'category-section';
+          section.id = catId;
 
-            itemsList.push({ id: Date.now() + Math.random(), type: type, file: null, url: url });
-            input.value = '';
-            renderList();
-            saveDraft();
-        }
+          const grid = document.createElement('div');
+          grid.className = 'image-grid';
 
-        function removeItem(id) {
-            itemsList = itemsList.filter(item => item.id !== id);
-            renderList();
-            saveDraft();
-        }
+          imagesData[catId].forEach(url => {
+            const img = document.createElement('img');
+            img.src = url;
+            img.loading = 'lazy';
+            grid.appendChild(img);
+          });
 
-        function clearItems() {
-            if (confirm("确定要清空当前排版的内容吗？")) {
-                itemsList = [];
-                localStorage.removeItem('portfolio_draft');
-                renderList();
-            }
-        }
+          section.appendChild(grid);
+          container.appendChild(section);
+        });
+      }
+    }
 
-        function initDragAndDropContainer() {
-            const container = document.getElementById('item-container');
-
-            container.addEventListener('dragover', e => {
-                e.preventDefault();
-                const draggingItem = document.querySelector('.dragging');
-                if (!draggingItem) return;
-
-                const afterElement = getDragAfterElement(container, e.clientY);
-                if (afterElement == null) {
-                    container.appendChild(draggingItem);
-                } else {
-                    container.insertBefore(draggingItem, afterElement);
-                }
-            });
-        }
-
-        function getDragAfterElement(container, y) {
-            const draggableElements = [...container.querySelectorAll('.item-card:not(.dragging)')];
-            return draggableElements.reduce((closest, child) => {
-                const box = child.getBoundingClientRect();
-                const offset = y - box.top - box.height / 2;
-                if (offset < 0 && offset > closest.offset) {
-                    return { offset: offset, element: child };
-                } else {
-                    return closest;
-                }
-            }, { offset: Number.NEGATIVE_INFINITY }).element;
-        }
-
-        function syncListOrderFromDOM() {
-            const cards = document.querySelectorAll('.item-card');
-            const newOrderedList = [];
-            cards.forEach(card => {
-                const id = parseFloat(card.dataset.id);
-                const found = itemsList.find(i => i.id === id);
-                if (found) newOrderedList.push(found);
-            });
-            itemsList = newOrderedList;
-            saveDraft();
-        }
-
-        function renderList() {
-            const container = document.getElementById('item-container');
-            container.innerHTML = '';
-
-            itemsList.forEach((item) => {
-                const card = document.createElement('div');
-                card.className = 'item-card';
-                card.draggable = true;
-                card.dataset.id = item.id;
-
-                card.addEventListener('dragstart', () => card.classList.add('dragging'));
-                card.addEventListener('dragend', () => {
-                    card.classList.remove('dragging');
-                    syncListOrderFromDOM();
-                });
-
-                if (item.type === 'image') {
-                    card.innerHTML = `
-                        <div class="card-actions"><button class="icon-btn" onclick="removeItem(${item.id})">✕</button></div>
-                        <img src="${item.url}" alt="作品图片" loading="lazy" draggable="false">
-                    `;
-                } else {
-                    card.innerHTML = `
-                        <div class="card-actions"><button class="icon-btn" onclick="removeItem(${item.id})">✕</button></div>
-                        <a href="${item.url}" target="_blank" class="link-card-body">
-                            <div>
-                                <h4 style="font-size: 15px;">🔗 网页链接</h4>
-                                <p style="font-size: 13px; color: var(--sub-text); margin-top: 4px;">${item.url}</p>
-                            </div>
-                            <span style="font-size: 18px;">↗</span>
-                        </a>
-                    `;
-                }
-                container.appendChild(card);
-            });
-        }
-
-        function openShareModal() {
-            if (itemsList.length === 0) return alert("请先添加内容！");
-            document.getElementById('share-modal').style.display = 'flex';
-        }
-
-        function closeShareModal() {
-            document.getElementById('share-modal').style.display = 'none';
-        }
-
-        async function publishPortfolio() {
-            const btn = document.getElementById('start-upload-btn');
-            const btnText = document.getElementById('btn-text');
-            btn.disabled = true;
-            btnText.innerHTML = '<span class="loading-spinner"></span> 处理中...';
-
-            try {
-                const finalItems = [];
-
-                for (const item of itemsList) {
-                    if (item.type === 'image' && item.file) {
-                        const ext = item.file.name.split('.').pop();
-                        const fileName = `${Date.now()}_${Math.random().toString(36).substring(2, 8)}.${ext}`;
-                        const filePath = `raw/${fileName}`;
-
-                        const uploadRes = await fetch(`${API_BASE}/storage/v1/object/user-images/${filePath}`, {
-                            method: 'POST',
-                            headers: {
-                                'apikey': SUPABASE_ANON_KEY,
-                                'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
-                                'Content-Type': item.file.type || 'application/octet-stream'
-                            },
-                            body: item.file
-                        });
-
-                        if (!uploadRes.ok) throw new Error("图片上传失败");
-
-                        const publicUrl = `${API_BASE}/storage/v1/object/public/user-images/${filePath}`;
-                        finalItems.push({ type: 'image', url: publicUrl });
-                    } else {
-                        finalItems.push({ type: item.type, url: item.url });
-                    }
-                }
-
-                const expireOption = document.getElementById('expire-select').value;
-                let expireAt = null;
-                const now = new Date();
-                if (expireOption === '1h') expireAt = new Date(now.getTime() + 3600 * 1000);
-                else if (expireOption === '24h') expireAt = new Date(now.getTime() + 24 * 3600 * 1000);
-                else if (expireOption === '7d') expireAt = new Date(now.getTime() + 7 * 24 * 3600 * 1000);
-
-                const dbRes = await fetch(`${API_BASE}/rest/v1/portfolios`, {
-                    method: 'POST',
-                    headers: {
-                        'apikey': SUPABASE_ANON_KEY,
-                        'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
-                        'Content-Type': 'application/json',
-                        'Prefer': 'return=representation'
-                    },
-                    body: JSON.stringify([{
-                        images: finalItems,
-                        expire_at: expireAt ? expireAt.toISOString() : null
-                    }])
-                });
-
-                if (!dbRes.ok) {
-                    const errData = await dbRes.json();
-                    throw new Error(errData.message || "保存数据库失败");
-                }
-
-                const records = await dbRes.json();
-                const record = records[0];
-
-                const shareUrl = `${window.location.origin}${window.location.pathname}?share=${record.id}`;
-                document.getElementById('share-result').style.display = 'block';
-                document.getElementById('share-url-input').value = shareUrl;
-
-                saveHistory(shareUrl);
-                renderHistory();
-
-                btnText.innerText = "完成";
-                btn.disabled = false;
-
-            } catch (err) {
-                console.error(err);
-                alert("发布失败: " + err.message);
-                btn.disabled = false;
-                btnText.innerText = "重新生成";
-            }
-        }
-
-        function saveHistory(url) {
-            let history = JSON.parse(localStorage.getItem('portfolio_history') || '[]');
-            history.unshift({ url, time: new Date().toLocaleDateString() });
-            history = history.slice(0, 5);
-            localStorage.setItem('portfolio_history', JSON.stringify(history));
-        }
-
-        function renderHistory() {
-            const history = JSON.parse(localStorage.getItem('portfolio_history') || '[]');
-            const box = document.getElementById('history-box');
-            const list = document.getElementById('history-list');
-
-            if (history.length === 0) {
-                box.style.display = 'none';
-                return;
-            }
-
-            box.style.display = 'block';
-            list.innerHTML = history.map(item => `
-                <div class="history-item">
-                    <a href="${item.url}" target="_blank" class="history-link">${item.url}</a>
-                    <span style="color: var(--sub-text);">${item.time}</span>
-                </div>
-            `).join('');
-        }
-
-        function switchToPreviewMode() {
-            document.getElementById('admin-actions').style.display = 'none';
-            document.getElementById('admin-upload-zone').style.display = 'none';
-            document.getElementById('history-box').style.display = 'none';
-            document.getElementById('view-tag').innerText = "作品集展示";
-        }
-
-        async function loadSharedPortfolio(shareId) {
-            try {
-                const res = await fetch(`${API_BASE}/rest/v1/portfolios?id=eq.${shareId}&select=*`, {
-                    headers: {
-                        'apikey': SUPABASE_ANON_KEY,
-                        'Authorization': `Bearer ${SUPABASE_ANON_KEY}`
-                    }
-                });
-
-                if (!res.ok) return showExpiredUI("拉取作品集失败。");
-
-                const records = await res.json();
-                if (!records || records.length === 0) return showExpiredUI("作品集不存在。");
-
-                const portfolio = records[0];
-
-                if (portfolio.expire_at && Date.now() > new Date(portfolio.expire_at).getTime()) {
-                    return showExpiredUI("该作品集的分享时限已到期。");
-                }
-
-                itemsList = (portfolio.images || []).map((item, idx) => ({
-                    id: idx,
-                    type: item.type || (isImageUrl(item.url || item) ? 'image' : 'link'),
-                    url: item.url || item
-                }));
-
-                renderPreviewList();
-
-            } catch (err) {
-                console.error(err);
-                showExpiredUI("网络连接超时，请刷新重试。");
-            }
-        }
-
-        function renderPreviewList() {
-            const container = document.getElementById('item-container');
-            container.innerHTML = '';
-
-            itemsList.forEach(item => {
-                const card = document.createElement('div');
-                card.className = 'item-card';
-                card.style.cursor = 'default';
-
-                if (item.type === 'image') {
-                    card.innerHTML = `<img src="${item.url}" alt="作品图片" loading="lazy" draggable="false">`;
-                } else {
-                    card.innerHTML = `
-                        <a href="${item.url}" target="_blank" class="link-card-body">
-                            <div>
-                                <h4 style="font-size: 15px;">🔗 外部链接</h4>
-                                <p style="font-size: 13px; color: var(--sub-text); margin-top: 4px;">${item.url}</p>
-                            </div>
-                            <span style="font-size: 18px;">↗</span>
-                        </a>
-                    `;
-                }
-                container.appendChild(card);
-            });
-        }
-
-        function showExpiredUI(msg) {
-            document.getElementById('app-view').style.display = 'none';
-            document.getElementById('expired-view').style.display = 'block';
-            if (msg) document.getElementById('expired-msg').innerText = msg;
-        }
-    </script>
+    // 启动加载
+    fetchPortfolioData();
+  </script>
 </body>
 </html>
