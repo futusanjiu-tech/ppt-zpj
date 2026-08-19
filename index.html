@@ -39,21 +39,53 @@
       font-weight: 600;
     }
 
-    /* 管理员上传与编辑操作面板 */
+    /* 管理操作面板 */
     .admin-panel {
       background: #1c1c1e;
       border-bottom: 1px solid #2c2c2e;
       padding: 16px 20px;
       display: flex;
       flex-direction: column;
-      gap: 12px;
+      gap: 16px;
+    }
+    .panel-section {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .panel-title {
+      font-size: 13px;
+      color: #8e8e93;
+      font-weight: 600;
     }
     .panel-row {
       display: flex;
       align-items: center;
-      gap: 12px;
+      gap: 10px;
       flex-wrap: wrap;
     }
+    
+    /* 输入框与选择框 */
+    input[type="text"], select, textarea {
+      background: #2c2c2e;
+      border: 1px solid #3a3a3c;
+      color: #fff;
+      padding: 8px 12px;
+      border-radius: 8px;
+      font-size: 14px;
+      outline: none;
+    }
+    input[type="text"]:focus, select:focus, textarea:focus {
+      border-color: #007aff;
+    }
+    textarea {
+      width: 100%;
+      height: 80px;
+      resize: vertical;
+      font-family: monospace;
+    }
+
+    /* 按钮 */
     .btn {
       background: #007aff;
       color: #fff;
@@ -63,35 +95,17 @@
       font-size: 14px;
       cursor: pointer;
       font-weight: 500;
-      transition: background 0.2s;
+      white-space: nowrap;
     }
-    .btn:hover {
-      background: #0056b3;
-    }
+    .btn:hover { background: #0056b3; }
     .btn-secondary {
       background: #2c2c2e;
       color: #3399ff;
       border: 1px solid #3a3a3c;
     }
-    .btn-secondary:hover {
-      background: #3a3a3c;
-    }
-    .file-input-label {
-      display: inline-block;
-      background: #2c2c2e;
-      color: #e5e5ea;
-      padding: 8px 16px;
-      border-radius: 8px;
-      cursor: pointer;
-      font-size: 14px;
-      border: 1px dashed #48484a;
-    }
-    .file-input-label:hover {
-      background: #3a3a3c;
-    }
-    input[type="file"] {
-      display: none;
-    }
+    .btn-secondary:hover { background: #3a3a3c; }
+
+    /* 链接提示区 */
     .share-url-display {
       font-size: 13px;
       color: #30d158;
@@ -114,9 +128,7 @@
       white-space: nowrap;
       scrollbar-width: none;
     }
-    .category-nav::-webkit-scrollbar {
-      display: none;
-    }
+    .category-nav::-webkit-scrollbar { display: none; }
     .nav-item {
       color: #8e8e93;
       text-decoration: none;
@@ -135,9 +147,7 @@
     }
 
     /* 主体图片区域 */
-    main {
-      padding: 16px;
-    }
+    main { padding: 16px; }
     .category-section {
       scroll-margin-top: 60px;
       margin-bottom: 32px;
@@ -147,15 +157,16 @@
       font-weight: 600;
       margin-bottom: 12px;
       color: #e5e5ea;
+      display: flex;
+      align-items: center;
+      gap: 8px;
     }
     .image-grid {
       display: flex;
       flex-direction: column;
       gap: 16px;
     }
-    .image-item-wrapper {
-      position: relative;
-    }
+    .image-item-wrapper { position: relative; }
     .image-grid img {
       width: 100%;
       height: auto;
@@ -163,7 +174,6 @@
       display: block;
       background-color: #1c1c1e;
     }
-    /* 编辑模式下删除图片按钮 */
     .delete-btn {
       position: absolute;
       top: 10px;
@@ -186,33 +196,49 @@
 </head>
 <body>
 
-  <!-- 顶部 Header（分享模式下隐藏） -->
+  <!-- 顶部 Header（分享模式隐藏） -->
   <header id="site-header">
     <h1>无损作品集</h1>
     <span class="badge">管理模式</span>
   </header>
 
-  <!-- 管理操作面板（分享模式下隐藏） -->
+  <!-- 管理操作面板（分享模式隐藏） -->
   <div class="admin-panel" id="admin-panel">
-    <div class="panel-row">
-      <label class="file-input-label">
-        📁 选择图片上传
-        <input type="file" id="image-uploader" multiple accept="image/*" />
-      </label>
-      <button class="btn" id="save-btn">保存并生成分享链接</button>
+    
+    <!-- 1. 标签分类管理 -->
+    <div class="panel-section">
+      <div class="panel-title">1. 添加自定义分类标签</div>
+      <div class="panel-row">
+        <input type="text" id="new-cat-name" placeholder="标签名称 (例: 3D Visual)" />
+        <button class="btn btn-secondary" id="add-cat-btn">+ 添加标签</button>
+      </div>
     </div>
-    <div class="panel-row" id="share-info" style="display: none;">
-      <span class="share-url-display" id="share-url"></span>
-      <button class="btn btn-secondary" id="copy-btn">复制分享链接</button>
+
+    <!-- 2. 图片链接添加 -->
+    <div class="panel-section">
+      <div class="panel-title">2. 添加图片链接（可选择对应分类，多条链接请换行）</div>
+      <textarea id="url-input" placeholder="https://example.com/image1.png&#10;https://example.com/image2.png"></textarea>
+      <div class="panel-row">
+        <select id="cat-select"></select>
+        <button class="btn btn-secondary" id="add-urls-btn">添加至该分类</button>
+      </div>
     </div>
+
+    <!-- 3. 全局保存生成 -->
+    <div class="panel-section" style="border-top: 1px solid #2c2c2e; padding-top: 12px;">
+      <div class="panel-row">
+        <button class="btn" id="save-btn" style="width: 100%; font-size: 15px; padding: 10px;">💾 保存作品集并生成分享链接</button>
+      </div>
+      <div class="panel-row" id="share-info" style="display: none; margin-top: 8px;">
+        <span class="share-url-display" id="share-url"></span>
+        <button class="btn btn-secondary" id="copy-btn">复制链接</button>
+      </div>
+    </div>
+
   </div>
 
-  <!-- 分类锚点导航栏（始终保留） -->
-  <nav class="category-nav" id="category-nav">
-    <a href="#cat-3d" class="nav-item">🎨 3D Visual</a>
-    <a href="#cat-ui" class="nav-item">📱 UI Design</a>
-    <a href="#cat-ip" class="nav-item">🧸 IP & Assets</a>
-  </nav>
+  <!-- 分类吸顶锚点导航栏 -->
+  <nav class="category-nav" id="category-nav"></nav>
 
   <!-- 主体图片展示区 -->
   <main id="portfolio-container">
@@ -224,89 +250,198 @@
     const shareId = urlParams.get('share');
     const isShareMode = !!shareId;
 
-    // 状态管理
-    let currentImages = [];
+    // 默认分类数据结构
+    let categories = [
+      { id: 'cat-3d', name: '🎨 3D Visual' },
+      { id: 'cat-ui', name: '📱 UI Design' },
+      { id: 'cat-ip', name: '🧸 IP & Assets' }
+    ];
 
-    // 1. 如果是分享模式，隐藏 Header 和后台编辑面板
+    // 作品数据结构：{ "cat-3d": ["url1", "url2"], "cat-ui": [] }
+    let portfolioData = {
+      'cat-3d': [],
+      'cat-ui': [],
+      'cat-ip': []
+    };
+
+    // 1. 分享模式下隐藏管理面板与顶栏
     if (isShareMode) {
       document.getElementById('site-header').style.display = 'none';
       document.getElementById('admin-panel').style.display = 'none';
     }
 
-    // 2. 绑定上传图片逻辑
-    const uploader = document.getElementById('image-uploader');
-    if (uploader) {
-      uploader.addEventListener('change', (e) => {
-        const files = Array.from(e.target.files);
-        files.forEach(file => {
-          const reader = new FileReader();
-          reader.onload = (event) => {
-            currentImages.push(event.target.result);
-            renderImages();
-          };
-          reader.readAsDataURL(file);
-        });
+    // 2. 渲染分类标签导航 & 下拉选择框
+    function renderCategoryUI() {
+      const navContainer = document.getElementById('category-nav');
+      const selectElem = document.getElementById('cat-select');
+      
+      navContainer.innerHTML = '';
+      if (selectElem) selectElem.innerHTML = '';
+
+      categories.forEach(cat => {
+        // 渲染顶部锚点 Navigation
+        const navItem = document.createElement('a');
+        navItem.className = 'nav-item';
+        navItem.href = `#${cat.id}`;
+        navItem.innerText = cat.name;
+        navContainer.appendChild(navItem);
+
+        // 渲染上传下拉框选项 Option
+        if (selectElem) {
+          const opt = document.createElement('option');
+          opt.value = cat.id;
+          opt.innerText = cat.name;
+          selectElem.appendChild(opt);
+        }
       });
     }
 
-    // 3. 渲染图片列表
-    function renderImages() {
+    // 3. 添加新标签
+    const addCatBtn = document.getElementById('add-cat-btn');
+    if (addCatBtn) {
+      addCatBtn.addEventListener('click', () => {
+        const input = document.getElementById('new-cat-name');
+        const name = input.value.trim();
+        if (!name) return;
+
+        const newId = 'cat-' + Date.now();
+        categories.push({ id: newId, name: name });
+        portfolioData[newId] = [];
+
+        input.value = '';
+        renderCategoryUI();
+        renderPortfolioContent();
+      });
+    }
+
+    // 4. 解析并批量添加图片 URL
+    const addUrlsBtn = document.getElementById('add-urls-btn');
+    if (addUrlsBtn) {
+      addUrlsBtn.addEventListener('click', () => {
+        const textarea = document.getElementById('url-input');
+        const selectedCatId = document.getElementById('cat-select').value;
+        const urls = textarea.value.split('\n').map(u => u.trim()).filter(u => u.length > 0);
+
+        if (urls.length === 0) {
+          alert('请先输入图片链接！');
+          return;
+        }
+
+        if (!portfolioData[selectedCatId]) {
+          portfolioData[selectedCatId] = [];
+        }
+
+        portfolioData[selectedCatId].push(...urls);
+        textarea.value = '';
+        renderPortfolioContent();
+      });
+    }
+
+    // 5. 渲染整页内容
+    function renderPortfolioContent() {
       const container = document.getElementById('portfolio-container');
       container.innerHTML = '';
 
-      if (currentImages.length === 0) {
-        container.innerHTML = '<div id="loading">暂无作品，请点击上方选择图片上传</div>';
-        return;
-      }
+      let hasImages = false;
 
-      const section = document.createElement('section');
-      section.className = 'category-section';
-      section.id = 'cat-3d';
+      categories.forEach(cat => {
+        const imgList = portfolioData[cat.id] || [];
+        
+        // 在分享模式下，若某分类无图片则不渲染该分类
+        if (isShareMode && imgList.length === 0) return;
 
-      const grid = document.createElement('div');
-      grid.className = 'image-grid';
+        hasImages = true;
 
-      currentImages.forEach((src, index) => {
-        const wrapper = document.createElement('div');
-        wrapper.className = 'image-item-wrapper';
+        const section = document.createElement('section');
+        section.className = 'category-section';
+        section.id = cat.id;
 
-        const img = document.createElement('img');
-        img.src = src;
+        const title = document.createElement('div');
+        title.className = 'category-title';
+        title.innerText = cat.name;
+        section.appendChild(title);
 
-        wrapper.appendChild(img);
+        const grid = document.createElement('div');
+        grid.className = 'image-grid';
 
-        // 管理模式下提供删除按钮
-        if (!isShareMode) {
-          const delBtn = document.createElement('button');
-          delBtn.className = 'delete-btn';
-          delBtn.innerText = '删除';
-          delBtn.onclick = () => {
-            currentImages.splice(index, 1);
-            renderImages();
-          };
-          wrapper.appendChild(delBtn);
+        if (imgList.length === 0) {
+          const emptyHint = document.createElement('div');
+          emptyHint.style.color = '#48484a';
+          emptyHint.style.fontSize = '13px';
+          emptyHint.innerText = '暂无图片';
+          grid.appendChild(emptyHint);
+        } else {
+          imgList.forEach((url, idx) => {
+            const wrapper = document.createElement('div');
+            wrapper.className = 'image-item-wrapper';
+
+            const img = document.createElement('img');
+            img.src = url;
+            img.loading = 'lazy';
+
+            wrapper.appendChild(img);
+
+            // 管理模式显示删除按钮
+            if (!isShareMode) {
+              const delBtn = document.createElement('button');
+              delBtn.className = 'delete-btn';
+              delBtn.innerText = '删除';
+              delBtn.onclick = () => {
+                portfolioData[cat.id].splice(idx, 1);
+                renderPortfolioContent();
+              };
+              wrapper.appendChild(delBtn);
+            }
+
+            grid.appendChild(wrapper);
+          });
         }
 
-        grid.appendChild(wrapper);
+        section.appendChild(grid);
+        container.appendChild(section);
       });
 
-      section.appendChild(grid);
-      container.appendChild(section);
+      if (!hasImages) {
+        container.innerHTML = '<div id="loading">暂无作品内容</div>';
+      }
     }
 
-    // 4. 保存并生成链接
+    // 6. 从 Supabase 获取数据
+    async function loadPortfolioData() {
+      try {
+        let apiUrl = '/sp-api/rest/v1/portfolios?select=*&order=created_at.desc&limit=1';
+        if (shareId) {
+          apiUrl = `/sp-api/rest/v1/portfolios?id=eq.${shareId}&select=*`;
+        }
+
+        const res = await fetch(apiUrl, {
+          headers: {
+            'apikey': 'sb_publishable_key_here',
+            'Authorization': 'Bearer sb_publishable_key_here'
+          }
+        });
+
+        if (res.ok) {
+          const data = await res.json();
+          if (data && data[0]) {
+            if (data[0].categories) categories = data[0].categories;
+            if (data[0].images_data) portfolioData = data[0].images_data;
+          }
+        }
+      } catch (err) {
+        console.error('加载远程失败', err);
+      } finally {
+        renderCategoryUI();
+        renderPortfolioContent();
+      }
+    }
+
+    // 7. 保存到 Supabase
     const saveBtn = document.getElementById('save-btn');
     if (saveBtn) {
       saveBtn.addEventListener('click', async () => {
-        if (currentImages.length === 0) {
-          alert('请先上传图片再进行保存！');
-          return;
-        }
-        
-        saveBtn.innerText = '正在保存...';
-        
+        saveBtn.innerText = '正在保存中...';
         try {
-          // 提交 Supabase 接口保存
           const res = await fetch('/sp-api/rest/v1/portfolios', {
             method: 'POST',
             headers: {
@@ -315,7 +450,10 @@
               'Authorization': 'Bearer sb_publishable_key_here',
               'Prefer': 'return=representation'
             },
-            body: JSON.stringify({ images: currentImages })
+            body: JSON.stringify({
+              categories: categories,
+              images_data: portfolioData
+            })
           });
 
           const data = await res.json();
@@ -325,27 +463,30 @@
             
             document.getElementById('share-info').style.display = 'flex';
             document.getElementById('share-url').innerText = fullShareUrl;
-            alert('保存成功！已生成分享链接。');
+            alert('保存成功！已经生成全新分享链接。');
           }
         } catch (err) {
           console.error(err);
-          alert('保存失败，请重试');
+          alert('保存失败，请检查配置');
         } finally {
-          saveBtn.innerText = '保存并生成分享链接';
+          saveBtn.innerText = '💾 保存作品集并生成分享链接';
         }
       });
     }
 
-    // 5. 复制分享链接
+    // 8. 复制按钮
     const copyBtn = document.getElementById('copy-btn');
     if (copyBtn) {
       copyBtn.addEventListener('click', () => {
         const urlText = document.getElementById('share-url').innerText;
         navigator.clipboard.writeText(urlText).then(() => {
-          alert('分享链接已复制到剪贴板！');
+          alert('链接已复制到剪贴板！');
         });
       });
     }
+
+    // 启动加载
+    loadPortfolioData();
   </script>
 </body>
 </html>
