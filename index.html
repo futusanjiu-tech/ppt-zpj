@@ -5,6 +5,10 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>无损作品集</title>
   <style>
+    :root {
+      --primary-color: #007aff; /* 默认高亮主题色 */
+    }
+
     * {
       box-sizing: border-box;
       margin: 0;
@@ -33,8 +37,8 @@
     .badge {
       font-size: 12px;
       padding: 3px 10px;
-      background-color: #004080;
-      color: #3399ff;
+      background-color: rgba(0, 122, 255, 0.2);
+      color: var(--primary-color);
       border-radius: 12px;
       font-weight: 600;
     }
@@ -99,12 +103,40 @@
       width: 100%;
     }
     input[type="text"]:focus, select:focus, textarea:focus {
-      border-color: #007aff;
+      border-color: var(--primary-color);
     }
     textarea {
       height: 90px;
       resize: vertical;
       font-family: monospace;
+    }
+
+    /* 颜色选择器控件样式 */
+    .color-picker-wrapper {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      background: #2c2c2e;
+      padding: 6px 12px;
+      border-radius: 8px;
+      border: 1px solid #3a3a3c;
+      width: 100%;
+    }
+    .color-picker-wrapper input[type="color"] {
+      -webkit-appearance: none;
+      border: none;
+      width: 28px;
+      height: 28px;
+      border-radius: 6px;
+      cursor: pointer;
+      background: none;
+    }
+    .color-picker-wrapper input[type="color"]::-webkit-color-swatch-wrapper {
+      padding: 0;
+    }
+    .color-picker-wrapper input[type="color"]::-webkit-color-swatch {
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      border-radius: 6px;
     }
 
     /* 标签管理列表 */
@@ -147,7 +179,7 @@
 
     /* 按钮 */
     .btn {
-      background: #007aff;
+      background: var(--primary-color);
       color: #fff;
       border: none;
       padding: 9px 16px;
@@ -156,11 +188,12 @@
       cursor: pointer;
       font-weight: 500;
       white-space: nowrap;
+      transition: background 0.2s;
     }
-    .btn:hover { background: #0056b3; }
+    .btn:hover { opacity: 0.9; }
     .btn-secondary {
       background: #2c2c2e;
-      color: #3399ff;
+      color: var(--primary-color);
       border: 1px solid #3a3a3c;
     }
     .btn-secondary:hover { background: #3a3a3c; }
@@ -195,27 +228,49 @@
       padding: 6px 16px;
       border-radius: 20px;
       background: rgba(255, 255, 255, 0.06);
-      transition: all 0.2s ease;
+      transition: all 0.25s ease;
       display: inline-flex;
       align-items: center;
+      font-weight: 500;
     }
-    .nav-item:hover, .nav-item.active {
+    .nav-item:hover {
       color: #ffffff;
-      background: #007aff;
+    }
+    /* 自定义选中状态样式 */
+    .nav-item.active {
+      color: #ffffff;
+      background: var(--primary-color);
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
     }
 
     /* 预览区内容架构 */
-    main { padding: 20px; }
+    main { padding: 24px 20px; }
     .category-section {
       scroll-margin-top: 60px;
-      margin-bottom: 32px;
+      margin-bottom: 36px;
     }
+    
+    /* 美化后的分类标题（含左侧小色块） */
     .category-title {
-      font-size: 18px;
+      font-size: 17px;
       font-weight: 600;
-      margin-bottom: 12px;
-      color: #e5e5ea;
+      margin-bottom: 16px;
+      color: #ffffff;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      letter-spacing: 0.3px;
     }
+    .category-title::before {
+      content: '';
+      display: inline-block;
+      width: 4px;
+      height: 18px;
+      background-color: var(--primary-color);
+      border-radius: 2px;
+      transition: background-color 0.2s;
+    }
+
     .image-grid {
       display: flex;
       flex-direction: column;
@@ -278,9 +333,18 @@
     <!-- 左侧管理面板（分享模式自动隐藏） -->
     <div class="admin-panel" id="admin-panel">
       
-      <!-- 1. 分类标签管理 -->
+      <!-- 1. 主题样式设置 -->
       <div class="panel-section">
-        <div class="panel-title">1. 分类标签管理与排序</div>
+        <div class="panel-title">1. 主题高亮色设置</div>
+        <div class="color-picker-wrapper">
+          <input type="color" id="primary-color-picker" value="#007aff" />
+          <span style="font-size: 13px; color: #ccc;">选中与指示块色彩</span>
+        </div>
+      </div>
+
+      <!-- 2. 分类标签管理 -->
+      <div class="panel-section">
+        <div class="panel-title">2. 分类标签管理与排序</div>
         <div class="category-manage-list" id="cat-manage-list"></div>
         <div class="panel-row" style="margin-top: 6px;">
           <input type="text" id="new-cat-name" placeholder="新标签名称 (如: 3D Visual)" />
@@ -288,9 +352,9 @@
         </div>
       </div>
 
-      <!-- 2. 图片链接解析 -->
+      <!-- 3. 图片链接解析 -->
       <div class="panel-section">
-        <div class="panel-title">2. 添加图片链接（多条请换行）</div>
+        <div class="panel-title">3. 添加图片链接（多条请换行）</div>
         <textarea id="url-input" placeholder="https://example.com/image1.png&#10;https://example.com/image2.png"></textarea>
         <div class="panel-row">
           <select id="cat-select"></select>
@@ -298,9 +362,9 @@
         </div>
       </div>
 
-      <!-- 3. 分享期限设置与保存 -->
+      <!-- 4. 分享期限设置与保存 -->
       <div class="panel-section" style="border-top: 1px solid #2c2c2e; padding-top: 16px;">
-        <div class="panel-title">3. 分享设置与生成</div>
+        <div class="panel-title">4. 分享设置与生成</div>
         <div class="panel-row">
           <label style="font-size: 13px; color: #aaa;">链接有效期：</label>
           <select id="expire-select">
@@ -339,10 +403,11 @@
     const shareId = urlParams.get('share');
     const isShareMode = !!shareId;
 
+    let primaryColor = '#007aff';
     let categories = [
-      { id: 'cat-3d', name: '🎨 3D Visual' },
-      { id: 'cat-ui', name: '📱 UI Design' },
-      { id: 'cat-ip', name: '🧸 IP & Assets' }
+      { id: 'cat-3d', name: '活动页H5' },
+      { id: 'cat-ui', name: 'UI 设计' },
+      { id: 'cat-ip', name: '3D 视觉' }
     ];
 
     let portfolioData = {
@@ -351,13 +416,27 @@
       'cat-ip': []
     };
 
+    // 设置 CSS 变量控制主题色
+    function updatePrimaryColor(color) {
+      primaryColor = color;
+      document.documentElement.style.setProperty('--primary-color', color);
+    }
+
+    // 监听颜色选择器
+    const colorPicker = document.getElementById('primary-color-picker');
+    if (colorPicker) {
+      colorPicker.addEventListener('input', (e) => {
+        updatePrimaryColor(e.target.value);
+      });
+    }
+
     // 1. 分享模式判定与界面控制
     if (isShareMode) {
       document.getElementById('site-header').style.display = 'none';
       document.getElementById('admin-panel').style.display = 'none';
     }
 
-    // 2. 渲染分类 UI（支持重命名与移位操作）
+    // 2. 渲染分类 UI
     function renderCategoryUI() {
       const navContainer = document.getElementById('category-nav');
       const selectElem = document.getElementById('cat-select');
@@ -370,12 +449,20 @@
       categories.forEach((cat, idx) => {
         // 顶部锚点导航
         const navItem = document.createElement('a');
-        navItem.className = 'nav-item';
+        navItem.className = `nav-item ${idx === 0 ? 'active' : ''}`;
         navItem.href = `#${cat.id}`;
         navItem.innerText = cat.name;
+        navItem.dataset.id = cat.id;
+        
+        // 点击切换激活样式
+        navItem.addEventListener('click', () => {
+          document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
+          navItem.classList.add('active');
+        });
+
         navContainer.appendChild(navItem);
 
-        // 选择下拉框
+        // 下拉框
         if (selectElem) {
           const opt = document.createElement('option');
           opt.value = cat.id;
@@ -383,7 +470,7 @@
           selectElem.appendChild(opt);
         }
 
-        // 标签管理列表（带重命名与左右/上下移动按键）
+        // 标签管理列表
         if (manageList) {
           const item = document.createElement('div');
           item.className = 'cat-tag-item';
@@ -402,7 +489,6 @@
 
       // 绑定标签控制事件
       if (manageList) {
-        // 向上移位
         manageList.querySelectorAll('.move-up').forEach(btn => {
           btn.addEventListener('click', (e) => {
             const idx = parseInt(e.target.dataset.idx);
@@ -416,7 +502,6 @@
           });
         });
 
-        // 向下移位
         manageList.querySelectorAll('.move-down').forEach(btn => {
           btn.addEventListener('click', (e) => {
             const idx = parseInt(e.target.dataset.idx);
@@ -430,7 +515,6 @@
           });
         });
 
-        // 重命名
         manageList.querySelectorAll('.rename-btn').forEach(btn => {
           btn.addEventListener('click', (e) => {
             const catId = e.target.dataset.id;
@@ -446,7 +530,6 @@
           });
         });
 
-        // 删除
         manageList.querySelectorAll('.del-cat-btn').forEach(btn => {
           btn.addEventListener('click', (e) => {
             const catId = e.target.dataset.id;
@@ -500,7 +583,7 @@
       });
     }
 
-    // 5. 渲染展区与拖拽支持
+    // 5. 渲染展区与滚动监听高亮
     function renderPortfolioContent() {
       const container = document.getElementById('portfolio-container');
       container.innerHTML = '';
@@ -572,7 +655,36 @@
 
       if (!hasImages) {
         container.innerHTML = '<div id="loading">暂无作品内容</div>';
+      } else {
+        setupScrollObserver();
       }
+    }
+
+    // 滚动自动跟随高亮标签导航
+    function setupScrollObserver() {
+      const observerOptions = {
+        root: null,
+        rootMargin: '-20% 0px -60% 0px',
+        threshold: 0
+      };
+
+      const observer = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+          if (entry.isIntersecting) {
+            const id = entry.target.id;
+            document.querySelectorAll('.nav-item').forEach(nav => {
+              if (nav.dataset.id === id) {
+                nav.classList.add('active');
+                nav.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
+              } else {
+                nav.classList.remove('active');
+              }
+            });
+          }
+        });
+      }, observerOptions);
+
+      document.querySelectorAll('.category-section').forEach(sec => observer.observe(sec));
     }
 
     // 6. 拖拽排序逻辑
@@ -649,6 +761,11 @@
               }
             }
 
+            if (record.primary_color) {
+              updatePrimaryColor(record.primary_color);
+              if (colorPicker) colorPicker.value = record.primary_color;
+            }
+
             if (record.categories && Array.isArray(record.categories) && record.categories.length > 0) {
               categories = record.categories;
             }
@@ -668,7 +785,7 @@
       }
     }
 
-    // 8. 保存数据（生成分享链接，不污染管理员的 URL）
+    // 8. 保存数据
     const saveBtn = document.getElementById('save-btn');
     if (saveBtn) {
       saveBtn.addEventListener('click', async () => {
@@ -685,6 +802,7 @@
         const allImagesFlat = Object.values(portfolioData).flat();
 
         const payload = {
+          primary_color: primaryColor,
           categories: categories,
           images_data: portfolioData,
           images: allImagesFlat,
@@ -716,8 +834,7 @@
             document.getElementById('share-info').style.display = 'flex';
             document.getElementById('share-url').innerText = fullShareUrl;
             
-            // 保持管理员原本管理链接不被改变，确保刷新依旧保留控制台
-            alert('保存成功！生成的新分享链接可在下方一键复制。');
+            alert('保存成功！包含自定义配色与新标题样式的作品集已写入数据库。');
           }
         } catch (err) {
           console.error(err);
