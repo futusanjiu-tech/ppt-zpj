@@ -110,23 +110,39 @@
     /* 标签管理列表 */
     .category-manage-list {
       display: flex;
-      flex-wrap: wrap;
-      gap: 6px;
+      flex-direction: column;
+      gap: 8px;
     }
-    .cat-tag {
-      display: inline-flex;
+    .cat-tag-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      padding: 6px 12px;
+      border-radius: 8px;
+      font-size: 13px;
+    }
+    .cat-tag-actions {
+      display: flex;
       align-items: center;
       gap: 6px;
-      background: rgba(255, 255, 255, 0.08);
-      padding: 4px 10px;
-      border-radius: 14px;
-      font-size: 13px;
-      color: #e5e5ea;
     }
-    .cat-tag .del-cat-btn {
-      color: #ff453a;
+    .cat-btn {
+      background: #2c2c2e;
+      border: none;
+      color: #aaa;
+      padding: 2px 6px;
+      border-radius: 4px;
       cursor: pointer;
-      font-weight: bold;
+      font-size: 12px;
+    }
+    .cat-btn:hover {
+      color: #fff;
+      background: #3a3a3c;
+    }
+    .cat-btn.del {
+      color: #ff453a;
     }
 
     /* 按钮 */
@@ -264,7 +280,7 @@
       
       <!-- 1. 分类标签管理 -->
       <div class="panel-section">
-        <div class="panel-title">1. 分类标签管理</div>
+        <div class="panel-title">1. 分类标签管理与排序</div>
         <div class="category-manage-list" id="cat-manage-list"></div>
         <div class="panel-row" style="margin-top: 6px;">
           <input type="text" id="new-cat-name" placeholder="新标签名称 (如: 3D Visual)" />
@@ -341,7 +357,7 @@
       document.getElementById('admin-panel').style.display = 'none';
     }
 
-    // 2. 渲染分类 UI（锚点、下拉菜单、标签删除）
+    // 2. 渲染分类 UI（支持重命名与移位操作）
     function renderCategoryUI() {
       const navContainer = document.getElementById('category-nav');
       const selectElem = document.getElementById('cat-select');
@@ -351,7 +367,7 @@
       if (selectElem) selectElem.innerHTML = '';
       if (manageList) manageList.innerHTML = '';
 
-      categories.forEach(cat => {
+      categories.forEach((cat, idx) => {
         // 顶部锚点导航
         const navItem = document.createElement('a');
         navItem.className = 'nav-item';
@@ -367,20 +383,73 @@
           selectElem.appendChild(opt);
         }
 
-        // 标签管理列表
+        // 标签管理列表（带重命名与左右/上下移动按键）
         if (manageList) {
-          const tag = document.createElement('div');
-          tag.className = 'cat-tag';
-          tag.innerHTML = `<span>${cat.name}</span><span class="del-cat-btn" data-id="${cat.id}">✕</span>`;
-          manageList.appendChild(tag);
+          const item = document.createElement('div');
+          item.className = 'cat-tag-item';
+          item.innerHTML = `
+            <span>${cat.name}</span>
+            <div class="cat-tag-actions">
+              <button class="cat-btn move-up" data-idx="${idx}">▲</button>
+              <button class="cat-btn move-down" data-idx="${idx}">▼</button>
+              <button class="cat-btn rename-btn" data-id="${cat.id}">✏️</button>
+              <button class="cat-btn del del-cat-btn" data-id="${cat.id}">✕</button>
+            </div>
+          `;
+          manageList.appendChild(item);
         }
       });
 
-      // 绑定标签删除点击事件
+      // 绑定标签控制事件
       if (manageList) {
+        // 向上移位
+        manageList.querySelectorAll('.move-up').forEach(btn => {
+          btn.addEventListener('click', (e) => {
+            const idx = parseInt(e.target.dataset.idx);
+            if (idx > 0) {
+              const temp = categories[idx];
+              categories[idx] = categories[idx - 1];
+              categories[idx - 1] = temp;
+              renderCategoryUI();
+              renderPortfolioContent();
+            }
+          });
+        });
+
+        // 向下移位
+        manageList.querySelectorAll('.move-down').forEach(btn => {
+          btn.addEventListener('click', (e) => {
+            const idx = parseInt(e.target.dataset.idx);
+            if (idx < categories.length - 1) {
+              const temp = categories[idx];
+              categories[idx] = categories[idx + 1];
+              categories[idx + 1] = temp;
+              renderCategoryUI();
+              renderPortfolioContent();
+            }
+          });
+        });
+
+        // 重命名
+        manageList.querySelectorAll('.rename-btn').forEach(btn => {
+          btn.addEventListener('click', (e) => {
+            const catId = e.target.dataset.id;
+            const targetCat = categories.find(c => c.id === catId);
+            if (targetCat) {
+              const newName = prompt('修改标签名称：', targetCat.name);
+              if (newName && newName.trim()) {
+                targetCat.name = newName.trim();
+                renderCategoryUI();
+                renderPortfolioContent();
+              }
+            }
+          });
+        });
+
+        // 删除
         manageList.querySelectorAll('.del-cat-btn').forEach(btn => {
           btn.addEventListener('click', (e) => {
-            const catId = e.target.getAttribute('data-id');
+            const catId = e.target.dataset.id;
             categories = categories.filter(c => c.id !== catId);
             delete portfolioData[catId];
             renderCategoryUI();
@@ -599,7 +668,7 @@
       }
     }
 
-    // 8. 保存数据并写入 DB
+    // 8. 保存数据（生成分享链接，不污染管理员的 URL）
     const saveBtn = document.getElementById('save-btn');
     if (saveBtn) {
       saveBtn.addEventListener('click', async () => {
@@ -647,9 +716,8 @@
             document.getElementById('share-info').style.display = 'flex';
             document.getElementById('share-url').innerText = fullShareUrl;
             
-            window.history.replaceState({}, '', `${window.location.pathname}?share=${newShareId}`);
-            
-            alert('保存成功！网络与数据库已同步持久化。');
+            // 保持管理员原本管理链接不被改变，确保刷新依旧保留控制台
+            alert('保存成功！生成的新分享链接可在下方一键复制。');
           }
         } catch (err) {
           console.error(err);
