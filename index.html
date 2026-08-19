@@ -221,7 +221,7 @@
       border-radius: 8px;
       display: block;
       background-color: #1c1c1e;
-      pointer-events: none; /* 防止原生图片拖拽干扰 */
+      pointer-events: none;
     }
     .delete-btn {
       position: absolute;
@@ -242,7 +242,7 @@
       color: #8e8e93;
     }
 
-    /* 移动端向下适配（窗口宽小于768px变上下布局） */
+    /* 移动端降级垂直排列 */
     @media (max-width: 768px) {
       .app-layout { flex-direction: column; }
       .admin-panel { width: 100%; max-height: none; position: static; }
@@ -251,7 +251,7 @@
 </head>
 <body>
 
-  <!-- 顶部 Header（分享模式隐藏） -->
+  <!-- 顶部 Header（分享模式自动隐藏） -->
   <header id="site-header">
     <h1>无损作品集</h1>
     <span class="badge">管理模式</span>
@@ -259,7 +259,7 @@
 
   <div class="app-layout">
     
-    <!-- 左侧管理操作面板（分享模式隐藏） -->
+    <!-- 左侧管理面板（分享模式自动隐藏） -->
     <div class="admin-panel" id="admin-panel">
       
       <!-- 1. 分类标签管理 -->
@@ -306,7 +306,7 @@
 
     <!-- 右侧实时预览/浏览区 -->
     <div class="preview-area">
-      <!-- 顶部锚点导航 -->
+      <!-- 顶部吸顶锚点导航 -->
       <nav class="category-nav" id="category-nav"></nav>
       <!-- 主体图片展区 -->
       <main id="portfolio-container">
@@ -333,13 +333,13 @@
       'cat-ip': []
     };
 
-    // 1. 分享模式判定与响应
+    // 1. 分享模式判定与界面控制
     if (isShareMode) {
       document.getElementById('site-header').style.display = 'none';
       document.getElementById('admin-panel').style.display = 'none';
     }
 
-    // 2. 渲染分类 UI（导航、下拉列表、删除标签列表）
+    // 2. 渲染分类 UI（锚点、下拉菜单、标签删除）
     function renderCategoryUI() {
       const navContainer = document.getElementById('category-nav');
       const selectElem = document.getElementById('cat-select');
@@ -350,14 +350,14 @@
       if (manageList) manageList.innerHTML = '';
 
       categories.forEach(cat => {
-        // 渲染顶部锚点 Navigation
+        // 顶部锚点导航
         const navItem = document.createElement('a');
         navItem.className = 'nav-item';
         navItem.href = `#${cat.id}`;
         navItem.innerText = cat.name;
         navContainer.appendChild(navItem);
 
-        // 渲染管理面板的下拉框
+        // 选择下拉框
         if (selectElem) {
           const opt = document.createElement('option');
           opt.value = cat.id;
@@ -365,7 +365,7 @@
           selectElem.appendChild(opt);
         }
 
-        // 渲染左侧标签删除列表
+        // 标签管理列表
         if (manageList) {
           const tag = document.createElement('div');
           tag.className = 'cat-tag';
@@ -374,7 +374,7 @@
         }
       });
 
-      // 绑定标签删除事件
+      // 绑定标签删除点击事件
       if (manageList) {
         manageList.querySelectorAll('.del-cat-btn').forEach(btn => {
           btn.addEventListener('click', (e) => {
@@ -388,7 +388,7 @@
       }
     }
 
-    // 3. 添加新分类标签
+    // 3. 添加新标签
     const addCatBtn = document.getElementById('add-cat-btn');
     if (addCatBtn) {
       addCatBtn.addEventListener('click', () => {
@@ -429,7 +429,7 @@
       });
     }
 
-    // 5. 渲染整页与拖拽排序逻辑
+    // 5. 渲染展区与拖拽支持
     function renderPortfolioContent() {
       const container = document.getElementById('portfolio-container');
       container.innerHTML = '';
@@ -464,8 +464,7 @@
           imgList.forEach((url, idx) => {
             const wrapper = document.createElement('div');
             wrapper.className = 'image-item-wrapper';
-            
-            // 启用拖拽（仅管理模式）
+
             if (!isShareMode) {
               wrapper.draggable = true;
               wrapper.dataset.index = idx;
@@ -477,7 +476,6 @@
             img.loading = 'lazy';
             wrapper.appendChild(img);
 
-            // 删除按钮
             if (!isShareMode) {
               const delBtn = document.createElement('button');
               delBtn.className = 'delete-btn';
@@ -492,7 +490,6 @@
             grid.appendChild(wrapper);
           });
 
-          // 为对应 grid 绑定 Drag API 逻辑
           if (!isShareMode) {
             setupDragAndDrop(grid, cat.id);
           }
@@ -507,7 +504,7 @@
       }
     }
 
-    // 6. 拖拽排序功能实现
+    // 6. 拖拽排序逻辑
     function setupDragAndDrop(gridContainer, catId) {
       let draggedItem = null;
 
@@ -517,11 +514,10 @@
         e.target.classList.add('dragging');
       });
 
-      gridContainer.addEventListener('dragend', (e) => {
+      gridContainer.addEventListener('dragend', () => {
         if (!draggedItem) return;
         draggedItem.classList.remove('dragging');
         
-        // 拖拽结束后更新全局数据数组顺序
         const items = Array.from(gridContainer.querySelectorAll('.image-item-wrapper'));
         const newUrls = items.map(item => item.querySelector('img').src);
         portfolioData[catId] = newUrls;
@@ -553,7 +549,7 @@
       }, { offset: Number.NEGATIVE_INFINITY }).element;
     }
 
-    // 7. 加载作品与时效判定
+    // 7. 加载远程数据（兼顾老数据结构）
     async function loadPortfolioData() {
       try {
         let apiUrl = '/sp-api/rest/v1/portfolios?select=*&order=created_at.desc&limit=1';
@@ -573,7 +569,6 @@
           if (data && data[0]) {
             const record = data[0];
 
-            // 有效期过期判定
             if (isShareMode && record.expires_at) {
               const now = Date.now();
               const expireTime = new Date(record.expires_at).getTime();
@@ -583,25 +578,31 @@
               }
             }
 
-            if (record.categories) categories = record.categories;
-            if (record.images_data) portfolioData = record.images_data;
+            if (record.categories && Array.isArray(record.categories) && record.categories.length > 0) {
+              categories = record.categories;
+            }
+            
+            if (record.images_data && typeof record.images_data === 'object') {
+              portfolioData = record.images_data;
+            } else if (record.images && Array.isArray(record.images)) {
+              portfolioData['cat-3d'] = record.images;
+            }
           }
         }
       } catch (err) {
-        console.error('加载远程失败', err);
+        console.error('加载远程数据失败', err);
       } finally {
         renderCategoryUI();
         renderPortfolioContent();
       }
     }
 
-    // 8. 保存生成与计算过期时间
+    // 8. 保存数据并写入 DB
     const saveBtn = document.getElementById('save-btn');
     if (saveBtn) {
       saveBtn.addEventListener('click', async () => {
         saveBtn.innerText = '正在保存中...';
         
-        // 计算有效期
         const expireDays = parseInt(document.getElementById('expire-select').value);
         let expiresAt = null;
         if (expireDays > 0) {
@@ -609,6 +610,15 @@
           expireDate.setDate(expireDate.getDate() + expireDays);
           expiresAt = expireDate.toISOString();
         }
+
+        const allImagesFlat = Object.values(portfolioData).flat();
+
+        const payload = {
+          categories: categories,
+          images_data: portfolioData,
+          images: allImagesFlat,
+          expires_at: expiresAt
+        };
 
         try {
           const res = await fetch('/sp-api/rest/v1/portfolios', {
@@ -619,12 +629,13 @@
               'Authorization': 'Bearer sb_publishable_key_here',
               'Prefer': 'return=representation'
             },
-            body: JSON.stringify({
-              categories: categories,
-              images_data: portfolioData,
-              expires_at: expiresAt
-            })
+            body: JSON.stringify(payload)
           });
+
+          if (!res.ok) {
+            const errorText = await res.text();
+            throw new Error(`保存失败: ${errorText}`);
+          }
 
           const data = await res.json();
           if (data && data[0] && data[0].id) {
@@ -633,11 +644,15 @@
             
             document.getElementById('share-info').style.display = 'flex';
             document.getElementById('share-url').innerText = fullShareUrl;
-            alert('保存成功！已更新生成分享链接。');
+            
+            // 自动刷新 URL 参数，保持页面状态一致
+            window.history.replaceState({}, '', `${window.location.pathname}?share=${newShareId}`);
+            
+            alert('保存成功！网络与数据库已同步持久化。');
           }
         } catch (err) {
           console.error(err);
-          alert('保存失败，请检查配置');
+          alert(`保存失败: ${err.message}`);
         } finally {
           saveBtn.innerText = '💾 保存作品集并生成链接';
         }
