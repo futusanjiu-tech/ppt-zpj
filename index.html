@@ -5,7 +5,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>作品集展示</title>
   <style>
-    /* 基础重置与平滑滚动 */
     * {
       box-sizing: border-box;
       margin: 0;
@@ -18,7 +17,7 @@
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
     }
 
-    /* 顶部 Header 样式 */
+    /* 顶部 Header */
     header {
       display: flex;
       align-items: center;
@@ -40,6 +39,65 @@
       font-weight: 600;
     }
 
+    /* 管理员上传与编辑操作面板 */
+    .admin-panel {
+      background: #1c1c1e;
+      border-bottom: 1px solid #2c2c2e;
+      padding: 16px 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+    .panel-row {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+    .btn {
+      background: #007aff;
+      color: #fff;
+      border: none;
+      padding: 8px 16px;
+      border-radius: 8px;
+      font-size: 14px;
+      cursor: pointer;
+      font-weight: 500;
+      transition: background 0.2s;
+    }
+    .btn:hover {
+      background: #0056b3;
+    }
+    .btn-secondary {
+      background: #2c2c2e;
+      color: #3399ff;
+      border: 1px solid #3a3a3c;
+    }
+    .btn-secondary:hover {
+      background: #3a3a3c;
+    }
+    .file-input-label {
+      display: inline-block;
+      background: #2c2c2e;
+      color: #e5e5ea;
+      padding: 8px 16px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 14px;
+      border: 1px dashed #48484a;
+    }
+    .file-input-label:hover {
+      background: #3a3a3c;
+    }
+    input[type="file"] {
+      display: none;
+    }
+    .share-url-display {
+      font-size: 13px;
+      color: #30d158;
+      word-break: break-all;
+    }
+
     /* 分类吸顶锚点导航栏 */
     .category-nav {
       position: sticky;
@@ -54,10 +112,10 @@
       border-bottom: 1px solid rgba(255, 255, 255, 0.08);
       overflow-x: auto;
       white-space: nowrap;
-      scrollbar-width: none; /* 隐藏滚动条 (Firefox) */
+      scrollbar-width: none;
     }
     .category-nav::-webkit-scrollbar {
-      display: none; /* 隐藏滚动条 (Chrome/Safari) */
+      display: none;
     }
     .nav-item {
       color: #8e8e93;
@@ -76,12 +134,12 @@
       background: #007aff;
     }
 
-    /* 作品内容区域 */
+    /* 主体图片区域 */
     main {
       padding: 16px;
     }
     .category-section {
-      scroll-margin-top: 60px; /* 避免锚点跳转时被吸顶导航遮挡 */
+      scroll-margin-top: 60px;
       margin-bottom: 32px;
     }
     .category-title {
@@ -89,14 +147,14 @@
       font-weight: 600;
       margin-bottom: 12px;
       color: #e5e5ea;
-      display: flex;
-      align-items: center;
-      gap: 8px;
     }
     .image-grid {
       display: flex;
       flex-direction: column;
       gap: 16px;
+    }
+    .image-item-wrapper {
+      position: relative;
     }
     .image-grid img {
       width: 100%;
@@ -105,8 +163,20 @@
       display: block;
       background-color: #1c1c1e;
     }
+    /* 编辑模式下删除图片按钮 */
+    .delete-btn {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      background: rgba(255, 59, 48, 0.85);
+      color: white;
+      border: none;
+      padding: 6px 12px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 12px;
+    }
 
-    /* 加载状态提示 */
     #loading {
       text-align: center;
       padding: 40px 0;
@@ -116,13 +186,28 @@
 </head>
 <body>
 
-  <!-- 顶部 Header（管理模式下显示，分享模式下会自动隐藏） -->
+  <!-- 顶部 Header（分享模式下隐藏） -->
   <header id="site-header">
     <h1>无损作品集</h1>
     <span class="badge">管理模式</span>
   </header>
 
-  <!-- 锚点分类导航栏 -->
+  <!-- 管理操作面板（分享模式下隐藏） -->
+  <div class="admin-panel" id="admin-panel">
+    <div class="panel-row">
+      <label class="file-input-label">
+        📁 选择图片上传
+        <input type="file" id="image-uploader" multiple accept="image/*" />
+      </label>
+      <button class="btn" id="save-btn">保存并生成分享链接</button>
+    </div>
+    <div class="panel-row" id="share-info" style="display: none;">
+      <span class="share-url-display" id="share-url"></span>
+      <button class="btn btn-secondary" id="copy-btn">复制分享链接</button>
+    </div>
+  </div>
+
+  <!-- 分类锚点导航栏（始终保留） -->
   <nav class="category-nav" id="category-nav">
     <a href="#cat-3d" class="nav-item">🎨 3D Visual</a>
     <a href="#cat-ui" class="nav-item">📱 UI Design</a>
@@ -135,102 +220,132 @@
   </main>
 
   <script>
-    // 1. 初始化页面参数与状态
     const urlParams = new URLSearchParams(window.location.search);
     const shareId = urlParams.get('share');
     const isShareMode = !!shareId;
 
-    // 2. 如果是分享模式，隐藏 Header 标题文字与标签
+    // 状态管理
+    let currentImages = [];
+
+    // 1. 如果是分享模式，隐藏 Header 和后台编辑面板
     if (isShareMode) {
-      const headerElem = document.getElementById('site-header');
-      if (headerElem) {
-        headerElem.style.display = 'none';
-      }
+      document.getElementById('site-header').style.display = 'none';
+      document.getElementById('admin-panel').style.display = 'none';
     }
 
-    // 3. 从 Vercel Rewrites 代理接口获取数据
-    async function fetchPortfolioData() {
+    // 2. 绑定上传图片逻辑
+    const uploader = document.getElementById('image-uploader');
+    if (uploader) {
+      uploader.addEventListener('change', (e) => {
+        const files = Array.from(e.target.files);
+        files.forEach(file => {
+          const reader = new FileReader();
+          reader.onload = (event) => {
+            currentImages.push(event.target.result);
+            renderImages();
+          };
+          reader.readAsDataURL(file);
+        });
+      });
+    }
+
+    // 3. 渲染图片列表
+    function renderImages() {
       const container = document.getElementById('portfolio-container');
-      
-      try {
-        // 构建请求路径（如果带有 shareId 则查询对应记录，否则默认获取最新）
-        let apiUrl = '/sp-api/rest/v1/portfolios?select=*&order=created_at.desc&limit=1';
-        if (shareId) {
-          apiUrl = `/sp-api/rest/v1/portfolios?id=eq.${shareId}&select=*`;
+      container.innerHTML = '';
+
+      if (currentImages.length === 0) {
+        container.innerHTML = '<div id="loading">暂无作品，请点击上方选择图片上传</div>';
+        return;
+      }
+
+      const section = document.createElement('section');
+      section.className = 'category-section';
+      section.id = 'cat-3d';
+
+      const grid = document.createElement('div');
+      grid.className = 'image-grid';
+
+      currentImages.forEach((src, index) => {
+        const wrapper = document.createElement('div');
+        wrapper.className = 'image-item-wrapper';
+
+        const img = document.createElement('img');
+        img.src = src;
+
+        wrapper.appendChild(img);
+
+        // 管理模式下提供删除按钮
+        if (!isShareMode) {
+          const delBtn = document.createElement('button');
+          delBtn.className = 'delete-btn';
+          delBtn.innerText = '删除';
+          delBtn.onclick = () => {
+            currentImages.splice(index, 1);
+            renderImages();
+          };
+          wrapper.appendChild(delBtn);
         }
 
-        const response = await fetch(apiUrl, {
-          headers: {
-            'apikey': 'sb_publishable_key_here', // 替换为你的 Supabase Publishable Key
-            'Authorization': 'Bearer sb_publishable_key_here'
-          }
-        });
+        grid.appendChild(wrapper);
+      });
 
-        if (!response.ok) throw new Error('数据请求失败');
-        const data = await response.json();
+      section.appendChild(grid);
+      container.appendChild(section);
+    }
 
-        if (!data || data.length === 0) {
-          container.innerHTML = '<div id="loading">暂无作品内容</div>';
+    // 4. 保存并生成链接
+    const saveBtn = document.getElementById('save-btn');
+    if (saveBtn) {
+      saveBtn.addEventListener('click', async () => {
+        if (currentImages.length === 0) {
+          alert('请先上传图片再进行保存！');
           return;
         }
-
-        renderPortfolio(data[0].images);
-      } catch (err) {
-        console.error(err);
-        container.innerHTML = '<div id="loading">内容加载失败，请刷新重试</div>';
-      }
-    }
-
-    // 4. 动态渲染图片分类列表
-    function renderPortfolio(imagesData) {
-      const container = document.getElementById('portfolio-container');
-      container.innerHTML = ''; // 清空 loading
-
-      // 假设 imagesData 数据结构支持按 category 分组，或为格式化的 JSON
-      // 示例数据兼容处理：如果为纯数组直接渲染，如果包含分类则按组渲染
-      if (Array.isArray(imagesData)) {
-        // 兼容单组图片格式
-        const section = document.createElement('section');
-        section.className = 'category-section';
-        section.id = 'cat-3d';
         
-        const grid = document.createElement('div');
-        grid.className = 'image-grid';
+        saveBtn.innerText = '正在保存...';
         
-        imagesData.forEach(url => {
-          const img = document.createElement('img');
-          img.src = url;
-          img.loading = 'lazy';
-          grid.appendChild(img);
-        });
-
-        section.appendChild(grid);
-        container.appendChild(section);
-      } else if (typeof imagesData === 'object') {
-        // 兼容多分类 JSON 格式: { "cat-3d": ["url1", "url2"], "cat-ui": ["url3"] }
-        Object.keys(imagesData).forEach(catId => {
-          const section = document.createElement('section');
-          section.className = 'category-section';
-          section.id = catId;
-
-          const grid = document.createElement('div');
-          grid.className = 'image-grid';
-
-          imagesData[catId].forEach(url => {
-            const img = document.createElement('img');
-            img.src = url;
-            img.loading = 'lazy';
-            grid.appendChild(img);
+        try {
+          // 提交 Supabase 接口保存
+          const res = await fetch('/sp-api/rest/v1/portfolios', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'apikey': 'sb_publishable_key_here',
+              'Authorization': 'Bearer sb_publishable_key_here',
+              'Prefer': 'return=representation'
+            },
+            body: JSON.stringify({ images: currentImages })
           });
 
-          section.appendChild(grid);
-          container.appendChild(section);
-        });
-      }
+          const data = await res.json();
+          if (data && data[0] && data[0].id) {
+            const newShareId = data[0].id;
+            const fullShareUrl = `${window.location.origin}${window.location.pathname}?share=${newShareId}`;
+            
+            document.getElementById('share-info').style.display = 'flex';
+            document.getElementById('share-url').innerText = fullShareUrl;
+            alert('保存成功！已生成分享链接。');
+          }
+        } catch (err) {
+          console.error(err);
+          alert('保存失败，请重试');
+        } finally {
+          saveBtn.innerText = '保存并生成分享链接';
+        }
+      });
     }
 
-    // 启动加载
-    fetchPortfolioData();
+    // 5. 复制分享链接
+    const copyBtn = document.getElementById('copy-btn');
+    if (copyBtn) {
+      copyBtn.addEventListener('click', () => {
+        const urlText = document.getElementById('share-url').innerText;
+        navigator.clipboard.writeText(urlText).then(() => {
+          alert('分享链接已复制到剪贴板！');
+        });
+      });
+    }
   </script>
 </body>
 </html>
