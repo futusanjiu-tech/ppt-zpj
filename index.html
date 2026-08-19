@@ -317,6 +317,8 @@
   </div>
 
   <script>
+    const SUPABASE_API_KEY = 'sb_publishable_WlJg39rJcx_L7lO8wDG-zw_qTE4fF5o';
+
     const urlParams = new URLSearchParams(window.location.search);
     const shareId = urlParams.get('share');
     const isShareMode = !!shareId;
@@ -549,7 +551,7 @@
       }, { offset: Number.NEGATIVE_INFINITY }).element;
     }
 
-    // 7. 加载远程数据（兼顾老数据结构）
+    // 7. 加载远程数据
     async function loadPortfolioData() {
       try {
         let apiUrl = '/sp-api/rest/v1/portfolios?select=*&order=created_at.desc&limit=1';
@@ -559,8 +561,8 @@
 
         const res = await fetch(apiUrl, {
           headers: {
-            'apikey': 'sb_publishable_key_here',
-            'Authorization': 'Bearer sb_publishable_key_here'
+            'apikey': SUPABASE_API_KEY,
+            'Authorization': `Bearer ${SUPABASE_API_KEY}`
           }
         });
 
@@ -625,8 +627,8 @@
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',
-              'apikey': 'sb_publishable_key_here',
-              'Authorization': 'Bearer sb_publishable_key_here',
+              'apikey': SUPABASE_API_KEY,
+              'Authorization': `Bearer ${SUPABASE_API_KEY}`,
               'Prefer': 'return=representation'
             },
             body: JSON.stringify(payload)
@@ -645,7 +647,6 @@
             document.getElementById('share-info').style.display = 'flex';
             document.getElementById('share-url').innerText = fullShareUrl;
             
-            // 自动刷新 URL 参数，保持页面状态一致
             window.history.replaceState({}, '', `${window.location.pathname}?share=${newShareId}`);
             
             alert('保存成功！网络与数据库已同步持久化。');
