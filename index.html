@@ -281,17 +281,41 @@
       background-color: #1c1c1e;
       pointer-events: none;
     }
-    .delete-btn {
+
+    /* 图片操作悬浮栏 */
+    .img-actions {
       position: absolute;
       top: 10px;
       right: 10px;
-      background: rgba(255, 59, 48, 0.85);
+      display: flex;
+      gap: 8px;
+      opacity: 0.85;
+      transition: opacity 0.2s;
+    }
+    .image-item-wrapper:hover .img-actions {
+      opacity: 1;
+    }
+    .img-action-btn {
       color: white;
       border: none;
       padding: 6px 12px;
       border-radius: 6px;
       cursor: pointer;
       font-size: 12px;
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+    }
+    .replace-btn {
+      background: rgba(0, 122, 255, 0.85);
+    }
+    .replace-btn:hover {
+      background: rgba(0, 122, 255, 1);
+    }
+    .delete-btn {
+      background: rgba(255, 59, 48, 0.85);
+    }
+    .delete-btn:hover {
+      background: rgba(255, 59, 48, 1);
     }
 
     #loading {
@@ -594,14 +618,32 @@
             wrapper.appendChild(img);
 
             if (!isShareMode) {
+              // 操作按钮组（替换 & 删除）
+              const actionsDiv = document.createElement('div');
+              actionsDiv.className = 'img-actions';
+
+              const replaceBtn = document.createElement('button');
+              replaceBtn.className = 'img-action-btn replace-btn';
+              replaceBtn.innerText = '替换';
+              replaceBtn.onclick = () => {
+                const newUrl = prompt('请输入替换后的新图片链接：', url);
+                if (newUrl && newUrl.trim() && newUrl.trim() !== url) {
+                  portfolioData[cat.id][idx] = newUrl.trim();
+                  renderPortfolioContent();
+                }
+              };
+
               const delBtn = document.createElement('button');
-              delBtn.className = 'delete-btn';
+              delBtn.className = 'img-action-btn delete-btn';
               delBtn.innerText = '删除';
               delBtn.onclick = () => {
                 portfolioData[cat.id].splice(idx, 1);
                 renderPortfolioContent();
               };
-              wrapper.appendChild(delBtn);
+
+              actionsDiv.appendChild(replaceBtn);
+              actionsDiv.appendChild(delBtn);
+              wrapper.appendChild(actionsDiv);
             }
 
             grid.appendChild(wrapper);
@@ -725,7 +767,6 @@
               categories = record.categories;
             }
 
-            // 兼容性读取主题颜色
             if (record.images_data && record.images_data._meta && record.images_data._meta.primary_color) {
               updatePrimaryColor(record.images_data._meta.primary_color);
               if (colorPicker) colorPicker.value = record.images_data._meta.primary_color;
@@ -764,7 +805,6 @@
 
         const allImagesFlat = Object.values(portfolioData).filter(v => Array.isArray(v)).flat();
 
-        // 巧用 images_data 里的 _meta 嵌套保存颜色，规避数据库缺少字段报错
         const saveDataObj = {
           ...portfolioData,
           _meta: { primary_color: primaryColor }
