@@ -7,6 +7,9 @@
   <style>
     :root {
       --primary-color: #007aff;
+      --bg-color: #121212;
+      --panel-bg: #1c1c1e;
+      --text-color: #ffffff;
     }
 
     * {
@@ -14,11 +17,12 @@
       margin: 0;
       padding: 0;
     }
-    html {
+    html, body {
       scroll-behavior: smooth;
-      background-color: #121212;
-      color: #ffffff;
+      background-color: var(--bg-color);
+      color: var(--text-color);
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      transition: background-color 0.25s ease;
     }
 
     header {
@@ -26,8 +30,8 @@
       align-items: center;
       gap: 12px;
       padding: 16px 24px;
-      background-color: #1a1a1a;
-      border-bottom: 1px solid #2a2a2a;
+      background-color: rgba(26, 26, 26, 0.8);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
     }
     header h1 {
       font-size: 18px;
@@ -50,8 +54,8 @@
     .admin-panel {
       width: 380px;
       flex-shrink: 0;
-      background: #1c1c1e;
-      border-right: 1px solid #2c2c2e;
+      background: var(--panel-bg);
+      border-right: 1px solid rgba(255, 255, 255, 0.08);
       padding: 20px;
       display: flex;
       flex-direction: column;
@@ -64,7 +68,7 @@
 
     .preview-area {
       flex: 1;
-      background: #121212;
+      background: transparent;
       display: flex;
       flex-direction: column;
       min-width: 0;
@@ -203,9 +207,9 @@
       display: flex;
       gap: 10px;
       padding: 12px 20px;
-      background: rgba(18, 18, 18, 0.85);
-      backdrop-filter: blur(12px);
-      -webkit-backdrop-filter: blur(12px);
+      background: rgba(18, 18, 18, 0.6);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
       border-bottom: 1px solid rgba(255, 255, 255, 0.08);
       overflow-x: auto;
       white-space: nowrap;
@@ -218,7 +222,7 @@
       font-size: 14px;
       padding: 6px 16px;
       border-radius: 20px;
-      background: rgba(255, 255, 255, 0.06);
+      background: rgba(255, 255, 255, 0.08);
       transition: all 0.25s ease;
       display: inline-flex;
       align-items: center;
@@ -243,7 +247,6 @@
       font-size: 17px;
       font-weight: 600;
       margin-bottom: 16px;
-      color: #ffffff;
       display: flex;
       align-items: center;
       gap: 10px;
@@ -278,7 +281,7 @@
       height: auto;
       border-radius: 8px;
       display: block;
-      background-color: #1c1c1e;
+      background-color: rgba(255, 255, 255, 0.05);
       pointer-events: none;
     }
 
@@ -340,10 +343,16 @@
   <div class="app-layout">
     <div class="admin-panel" id="admin-panel">
       <div class="panel-section">
-        <div class="panel-title">1. 主题高亮色设置</div>
+        <div class="panel-title">1. 主题视觉设置</div>
+        
         <div class="color-picker-wrapper">
           <input type="color" id="primary-color-picker" value="#007aff" />
-          <span style="font-size: 13px; color: #ccc;">选中与指示块色彩</span>
+          <span style="font-size: 13px; color: #ccc;">品牌高亮色</span>
+        </div>
+
+        <div class="color-picker-wrapper" style="margin-top: 6px;">
+          <input type="color" id="bg-color-picker" value="#121212" />
+          <span style="font-size: 13px; color: #ccc;">全局页面背景色</span>
         </div>
       </div>
 
@@ -365,7 +374,7 @@
         </div>
       </div>
 
-      <div class="panel-section" style="border-top: 1px solid #2c2c2e; padding-top: 16px;">
+      <div class="panel-section" style="border-top: 1px solid rgba(255,255,255,0.1); padding-top: 16px;">
         <div class="panel-title">4. 分享设置与生成</div>
         <div class="panel-row">
           <label style="font-size: 13px; color: #aaa;">链接有效期：</label>
@@ -403,6 +412,8 @@
     const isShareMode = !!shareId;
 
     let primaryColor = '#007aff';
+    let bgColor = '#121212';
+
     let categories = [
       { id: 'cat-3d', name: '活动页H5' },
       { id: 'cat-ui', name: 'UI 设计' },
@@ -420,10 +431,35 @@
       document.documentElement.style.setProperty('--primary-color', color);
     }
 
+    function updateBgColor(color) {
+      bgColor = color;
+      document.documentElement.style.setProperty('--bg-color', color);
+      
+      // 简单根据背景亮度做文字色彩自适应（浅背景用深字，深背景用白字）
+      const hex = color.replace('#', '');
+      const r = parseInt(hex.substr(0, 2), 16) || 0;
+      const g = parseInt(hex.substr(2, 2), 16) || 0;
+      const b = parseInt(hex.substr(4, 2), 16) || 0;
+      const brightness = (r * 299 + g * 587 + b * 114) / 1000;
+
+      if (brightness > 128) {
+        document.documentElement.style.setProperty('--text-color', '#121212');
+      } else {
+        document.documentElement.style.setProperty('--text-color', '#ffffff');
+      }
+    }
+
     const colorPicker = document.getElementById('primary-color-picker');
     if (colorPicker) {
       colorPicker.addEventListener('input', (e) => {
         updatePrimaryColor(e.target.value);
+      });
+    }
+
+    const bgColorPicker = document.getElementById('bg-color-picker');
+    if (bgColorPicker) {
+      bgColorPicker.addEventListener('input', (e) => {
+        updateBgColor(e.target.value);
       });
     }
 
@@ -597,7 +633,7 @@
 
         if (imgList.length === 0) {
           const emptyHint = document.createElement('div');
-          emptyHint.style.color = '#48484a';
+          emptyHint.style.color = '#8e8e93';
           emptyHint.style.fontSize = '13px';
           emptyHint.innerText = '暂无图片';
           grid.appendChild(emptyHint);
@@ -618,7 +654,6 @@
             wrapper.appendChild(img);
 
             if (!isShareMode) {
-              // 操作按钮组（替换 & 删除）
               const actionsDiv = document.createElement('div');
               actionsDiv.className = 'img-actions';
 
@@ -767,9 +802,17 @@
               categories = record.categories;
             }
 
-            if (record.images_data && record.images_data._meta && record.images_data._meta.primary_color) {
-              updatePrimaryColor(record.images_data._meta.primary_color);
-              if (colorPicker) colorPicker.value = record.images_data._meta.primary_color;
+            // 读取与加载 主题色彩 和 背景色
+            if (record.images_data && record.images_data._meta) {
+              const meta = record.images_data._meta;
+              if (meta.primary_color) {
+                updatePrimaryColor(meta.primary_color);
+                if (colorPicker) colorPicker.value = meta.primary_color;
+              }
+              if (meta.bg_color) {
+                updateBgColor(meta.bg_color);
+                if (bgColorPicker) bgColorPicker.value = meta.bg_color;
+              }
             } else if (record.primary_color) {
               updatePrimaryColor(record.primary_color);
               if (colorPicker) colorPicker.value = record.primary_color;
@@ -807,7 +850,10 @@
 
         const saveDataObj = {
           ...portfolioData,
-          _meta: { primary_color: primaryColor }
+          _meta: { 
+            primary_color: primaryColor,
+            bg_color: bgColor 
+          }
         };
 
         const payload = {
