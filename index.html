@@ -270,11 +270,7 @@
     
     .image-item-wrapper {
       position: relative;
-      cursor: grab;
       user-select: none;
-    }
-    .image-item-wrapper.dragging {
-      opacity: 0.4;
     }
     .image-grid img {
       width: 100%;
@@ -291,9 +287,14 @@
       top: 10px;
       right: 10px;
       display: flex;
-      gap: 8px;
-      opacity: 0.85;
+      gap: 6px;
+      opacity: 0.9;
       transition: opacity 0.2s;
+      background: rgba(0, 0, 0, 0.4);
+      padding: 4px 6px;
+      border-radius: 8px;
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
     }
     .image-item-wrapper:hover .img-actions {
       opacity: 1;
@@ -301,12 +302,15 @@
     .img-action-btn {
       color: white;
       border: none;
-      padding: 6px 12px;
+      padding: 5px 10px;
       border-radius: 6px;
       cursor: pointer;
       font-size: 12px;
-      backdrop-filter: blur(8px);
-      -webkit-backdrop-filter: blur(8px);
+      background: rgba(255, 255, 255, 0.15);
+      transition: background 0.2s;
+    }
+    .img-action-btn:hover {
+      background: rgba(255, 255, 255, 0.3);
     }
     .replace-btn {
       background: rgba(0, 122, 255, 0.85);
@@ -435,7 +439,6 @@
       bgColor = color;
       document.documentElement.style.setProperty('--bg-color', color);
       
-      // 简单根据背景亮度做文字色彩自适应（浅背景用深字，深背景用白字）
       const hex = color.replace('#', '');
       const r = parseInt(hex.substr(0, 2), 16) || 0;
       const g = parseInt(hex.substr(2, 2), 16) || 0;
@@ -607,6 +610,14 @@
       });
     }
 
+    function moveImage(catId, fromIndex, toIndex) {
+      const list = portfolioData[catId];
+      if (!list || toIndex < 0 || toIndex >= list.length) return;
+      const item = list.splice(fromIndex, 1)[0];
+      list.splice(toIndex, 0, item);
+      renderPortfolioContent();
+    }
+
     function renderPortfolioContent() {
       const container = document.getElementById('portfolio-container');
       container.innerHTML = '';
@@ -642,12 +653,6 @@
             const wrapper = document.createElement('div');
             wrapper.className = 'image-item-wrapper';
 
-            if (!isShareMode) {
-              wrapper.draggable = true;
-              wrapper.dataset.index = idx;
-              wrapper.dataset.catId = cat.id;
-            }
-
             const img = document.createElement('img');
             img.src = url;
             img.loading = 'lazy';
@@ -656,6 +661,22 @@
             if (!isShareMode) {
               const actionsDiv = document.createElement('div');
               actionsDiv.className = 'img-actions';
+
+              if (idx > 0) {
+                const upBtn = document.createElement('button');
+                upBtn.className = 'img-action-btn';
+                upBtn.innerText = '▲ 上移';
+                upBtn.onclick = () => moveImage(cat.id, idx, idx - 1);
+                actionsDiv.appendChild(upBtn);
+              }
+
+              if (idx < imgList.length - 1) {
+                const downBtn = document.createElement('button');
+                downBtn.className = 'img-action-btn';
+                downBtn.innerText = '▼ 下移';
+                downBtn.onclick = () => moveImage(cat.id, idx, idx + 1);
+                actionsDiv.appendChild(downBtn);
+              }
 
               const replaceBtn = document.createElement('button');
               replaceBtn.className = 'img-action-btn replace-btn';
@@ -683,10 +704,6 @@
 
             grid.appendChild(wrapper);
           });
-
-          if (!isShareMode) {
-            setupDragAndDrop(grid, cat.id);
-          }
         }
 
         section.appendChild(grid);
@@ -726,50 +743,6 @@
       document.querySelectorAll('.category-section').forEach(sec => observer.observe(sec));
     }
 
-    function setupDragAndDrop(gridContainer, catId) {
-      let draggedItem = null;
-
-      gridContainer.addEventListener('dragstart', (e) => {
-        if (!e.target.classList.contains('image-item-wrapper')) return;
-        draggedItem = e.target;
-        e.target.classList.add('dragging');
-      });
-
-      gridContainer.addEventListener('dragend', () => {
-        if (!draggedItem) return;
-        draggedItem.classList.remove('dragging');
-        
-        const items = Array.from(gridContainer.querySelectorAll('.image-item-wrapper'));
-        const newUrls = items.map(item => item.querySelector('img').src);
-        portfolioData[catId] = newUrls;
-        
-        draggedItem = null;
-      });
-
-      gridContainer.addEventListener('dragover', (e) => {
-        e.preventDefault();
-        const afterElement = getDragAfterElement(gridContainer, e.clientY);
-        if (afterElement == null) {
-          gridContainer.appendChild(draggedItem);
-        } else {
-          gridContainer.insertBefore(draggedItem, afterElement);
-        }
-      });
-    }
-
-    function getDragAfterElement(container, y) {
-      const draggableElements = [...container.querySelectorAll('.image-item-wrapper:not(.dragging)')];
-      return draggableElements.reduce((closest, child) => {
-        const box = child.getBoundingClientRect();
-        const offset = y - box.top - box.height / 2;
-        if (offset < 0 && offset > closest.offset) {
-          return { offset: offset, element: child };
-        } else {
-          return closest;
-        }
-      }, { offset: Number.NEGATIVE_INFINITY }).element;
-    }
-
     async function loadPortfolioData() {
       try {
         let apiUrl = '/sp-api/rest/v1/portfolios?select=*&order=created_at.desc&limit=1';
@@ -802,7 +775,6 @@
               categories = record.categories;
             }
 
-            // 读取与加载 主题色彩 和 背景色
             if (record.images_data && record.images_data._meta) {
               const meta = record.images_data._meta;
               if (meta.primary_color) {
