@@ -272,16 +272,16 @@
       position: relative;
       user-select: none;
     }
-    .image-grid img {
+    .image-grid img, .image-grid video {
       width: 100%;
       height: auto;
       border-radius: 8px;
       display: block;
       background-color: rgba(255, 255, 255, 0.05);
-      pointer-events: none;
+      object-fit: contain;
     }
 
-    /* 图片操作悬浮栏 */
+    /* 操作悬浮栏 */
     .img-actions {
       position: absolute;
       top: 10px;
@@ -295,6 +295,7 @@
       border-radius: 8px;
       backdrop-filter: blur(8px);
       -webkit-backdrop-filter: blur(8px);
+      z-index: 10;
     }
     .image-item-wrapper:hover .img-actions {
       opacity: 1;
@@ -370,8 +371,8 @@
       </div>
 
       <div class="panel-section">
-        <div class="panel-title">3. 添加图片链接（多条请换行）</div>
-        <textarea id="url-input" placeholder="https://example.com/image1.png&#10;https://example.com/image2.png"></textarea>
+        <div class="panel-title">3. 添加图片/视频链接（多条请换行）</div>
+        <textarea id="url-input" placeholder="https://example.com/image.png&#10;https://example.com/demo.mp4"></textarea>
         <div class="panel-row">
           <select id="cat-select"></select>
           <button class="btn btn-secondary" id="add-urls-btn" style="width: 100%;">添加至选定分类</button>
@@ -429,6 +430,12 @@
       'cat-ui': [],
       'cat-ip': []
     };
+
+    function isVideoUrl(url) {
+      if (!url) return false;
+      const cleanUrl = url.split('?')[0].toLowerCase();
+      return /\.(mp4|webm|ogg|mov|m4v)$/i.test(cleanUrl);
+    }
 
     function updatePrimaryColor(color) {
       primaryColor = color;
@@ -596,7 +603,7 @@
         const urls = textarea.value.split('\n').map(u => u.trim()).filter(u => u.length > 0);
 
         if (urls.length === 0) {
-          alert('请先粘贴图片链接！');
+          alert('请先粘贴图片或视频链接！');
           return;
         }
 
@@ -622,13 +629,13 @@
       const container = document.getElementById('portfolio-container');
       container.innerHTML = '';
 
-      let hasImages = false;
+      let hasMedia = false;
 
       categories.forEach(cat => {
-        const imgList = portfolioData[cat.id] || [];
-        if (isShareMode && imgList.length === 0) return;
+        const mediaList = portfolioData[cat.id] || [];
+        if (isShareMode && mediaList.length === 0) return;
 
-        hasImages = true;
+        hasMedia = true;
 
         const section = document.createElement('section');
         section.className = 'category-section';
@@ -642,21 +649,32 @@
         const grid = document.createElement('div');
         grid.className = 'image-grid';
 
-        if (imgList.length === 0) {
+        if (mediaList.length === 0) {
           const emptyHint = document.createElement('div');
           emptyHint.style.color = '#8e8e93';
           emptyHint.style.fontSize = '13px';
-          emptyHint.innerText = '暂无图片';
+          emptyHint.innerText = '暂无媒体内容';
           grid.appendChild(emptyHint);
         } else {
-          imgList.forEach((url, idx) => {
+          mediaList.forEach((url, idx) => {
             const wrapper = document.createElement('div');
             wrapper.className = 'image-item-wrapper';
 
-            const img = document.createElement('img');
-            img.src = url;
-            img.loading = 'lazy';
-            wrapper.appendChild(img);
+            if (isVideoUrl(url)) {
+              const video = document.createElement('video');
+              video.src = url;
+              video.autoplay = true;
+              video.loop = true;
+              video.muted = true;
+              video.playsInline = true;
+              video.controls = false;
+              wrapper.appendChild(video);
+            } else {
+              const img = document.createElement('img');
+              img.src = url;
+              img.loading = 'lazy';
+              wrapper.appendChild(img);
+            }
 
             if (!isShareMode) {
               const actionsDiv = document.createElement('div');
@@ -670,7 +688,7 @@
                 actionsDiv.appendChild(upBtn);
               }
 
-              if (idx < imgList.length - 1) {
+              if (idx < mediaList.length - 1) {
                 const downBtn = document.createElement('button');
                 downBtn.className = 'img-action-btn';
                 downBtn.innerText = '▼ 下移';
@@ -682,7 +700,7 @@
               replaceBtn.className = 'img-action-btn replace-btn';
               replaceBtn.innerText = '替换';
               replaceBtn.onclick = () => {
-                const newUrl = prompt('请输入替换后的新图片链接：', url);
+                const newUrl = prompt('请输入替换后的新图片/视频链接：', url);
                 if (newUrl && newUrl.trim() && newUrl.trim() !== url) {
                   portfolioData[cat.id][idx] = newUrl.trim();
                   renderPortfolioContent();
@@ -710,7 +728,7 @@
         container.appendChild(section);
       });
 
-      if (!hasImages) {
+      if (!hasMedia) {
         container.innerHTML = '<div id="loading">暂无作品内容</div>';
       } else {
         setupScrollObserver();
