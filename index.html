@@ -663,11 +663,9 @@
             if (isVideoUrl(url)) {
               const video = document.createElement('video');
               video.src = url;
-              video.autoplay = true;
-              video.loop = true;
-              video.muted = true;
+              video.controls = true;       /* 显示包含播放按钮在内的原生控制条 */
+              video.preload = 'metadata';  /* 加载视频元数据，展示第一帧 */
               video.playsInline = true;
-              video.controls = false;
               wrapper.appendChild(video);
             } else {
               const img = document.createElement('img');
