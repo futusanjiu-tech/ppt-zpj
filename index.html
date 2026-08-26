@@ -3,8 +3,8 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <!-- 修改此处修改浏览器地址栏/标签页显示的网页名称 -->
-  <title>我的作品集</title>
+  <!-- 网页标题，手机端搜索框与历史记录显示的文字 -->
+  <title>作品集展示</title>
   <style>
     :root {
       --primary-color: #007aff;
@@ -272,7 +272,7 @@
     .image-item-wrapper {
       position: relative;
       user-select: none;
-      min-height: 200px; /* 预留高度防止无阻碍下载过度卡顿 */
+      min-height: 200px;
       background-color: rgba(255, 255, 255, 0.03);
       border-radius: 8px;
       overflow: hidden;
@@ -287,7 +287,6 @@
       transition: opacity 0.3s;
     }
 
-    /* 操作悬浮栏 */
     .img-actions {
       position: absolute;
       top: 10px;
@@ -347,7 +346,7 @@
 <body>
 
   <header id="site-header">
-    <h1 id="page-main-title">我的作品集</h1>
+    <h1 id="page-main-title">作品集管理后台</h1>
     <span class="badge">管理模式</span>
   </header>
 
@@ -631,7 +630,6 @@
       renderPortfolioContent();
     }
 
-    /* 高效懒加载，拦截未进入视口的媒体请求，解决微信/多浏览器卡顿问题 */
     let mediaObserver = null;
     function setupMediaLazyLoad() {
       if (mediaObserver) mediaObserver.disconnect();
@@ -649,7 +647,7 @@
           }
         });
       }, {
-        rootMargin: '200px 0px 200px 0px' /* 提前 200px 异步加载 */
+        rootMargin: '200px 0px 200px 0px'
       });
 
       document.querySelectorAll('.lazy-media').forEach(el => mediaObserver.observe(el));
@@ -694,19 +692,17 @@
               const video = document.createElement('video');
               video.className = 'lazy-media';
               
-              // 在 URL 末尾拼接 #t=0.001，强制移动端渲染第一帧作为缩略图
               const videoSrcWithTime = url.includes('#') ? url : `${url}#t=0.001`;
               video.setAttribute('data-src', videoSrcWithTime);
               
               video.controls = true;
-              video.preload = 'auto'; // 允许预加载首帧
-              video.muted = true;    // 静音（移动端预加载首帧的前提）
+              video.preload = 'auto';
+              video.muted = true;
               video.playsInline = true;
               video.setAttribute('playsinline', '');
               video.setAttribute('webkit-playsinline', '');
 
               wrapper.appendChild(video);
-            }
             } else {
               const img = document.createElement('img');
               img.className = 'lazy-media';
