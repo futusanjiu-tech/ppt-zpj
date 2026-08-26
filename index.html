@@ -629,7 +629,7 @@
       renderPortfolioContent();
     }
 
-    let mediaObserver = null;
+   let mediaObserver = null;
     function setupMediaLazyLoad() {
       if (mediaObserver) mediaObserver.disconnect();
 
@@ -645,10 +645,8 @@
             observer.unobserve(elem);
           }
         });
-    }, {
+      }, {
         rootMargin: '300px 0px 300px 0px'
-      });
-        rootMargin: '200px 0px 200px 0px'
       });
 
       document.querySelectorAll('.lazy-media').forEach(el => mediaObserver.observe(el));
