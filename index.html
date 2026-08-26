@@ -3,7 +3,8 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>无损作品集</title>
+  <!-- 修改此处修改浏览器地址栏/标签页显示的网页名称 -->
+  <title>我的作品集</title>
   <style>
     :root {
       --primary-color: #007aff;
@@ -271,6 +272,10 @@
     .image-item-wrapper {
       position: relative;
       user-select: none;
+      min-height: 200px; /* 预留高度防止无阻碍下载过度卡顿 */
+      background-color: rgba(255, 255, 255, 0.03);
+      border-radius: 8px;
+      overflow: hidden;
     }
     .image-grid img, .image-grid video {
       width: 100%;
@@ -279,6 +284,7 @@
       display: block;
       background-color: rgba(255, 255, 255, 0.05);
       object-fit: contain;
+      transition: opacity 0.3s;
     }
 
     /* 操作悬浮栏 */
@@ -341,7 +347,7 @@
 <body>
 
   <header id="site-header">
-    <h1>无损作品集</h1>
+    <h1 id="page-main-title">我的作品集</h1>
     <span class="badge">管理模式</span>
   </header>
 
@@ -625,6 +631,30 @@
       renderPortfolioContent();
     }
 
+    /* 高效懒加载，拦截未进入视口的媒体请求，解决微信/多浏览器卡顿问题 */
+    let mediaObserver = null;
+    function setupMediaLazyLoad() {
+      if (mediaObserver) mediaObserver.disconnect();
+
+      mediaObserver = new IntersectionObserver((entries, observer) => {
+        entries.forEach(entry => {
+          if (entry.isIntersecting) {
+            const elem = entry.target;
+            const dataSrc = elem.getAttribute('data-src');
+            if (dataSrc) {
+              elem.src = dataSrc;
+              elem.removeAttribute('data-src');
+            }
+            observer.unobserve(elem);
+          }
+        });
+      }, {
+        rootMargin: '200px 0px 200px 0px' /* 提前 200px 异步加载 */
+      });
+
+      document.querySelectorAll('.lazy-media').forEach(el => mediaObserver.observe(el));
+    }
+
     function renderPortfolioContent() {
       const container = document.getElementById('portfolio-container');
       container.innerHTML = '';
@@ -662,15 +692,16 @@
 
             if (isVideoUrl(url)) {
               const video = document.createElement('video');
-              video.src = url;
-              video.controls = true;       /* 显示包含播放按钮在内的原生控制条 */
-              video.preload = 'metadata';  /* 加载视频元数据，展示第一帧 */
+              video.className = 'lazy-media';
+              video.setAttribute('data-src', url);
+              video.controls = true;
+              video.preload = 'metadata';
               video.playsInline = true;
               wrapper.appendChild(video);
             } else {
               const img = document.createElement('img');
-              img.src = url;
-              img.loading = 'lazy';
+              img.className = 'lazy-media';
+              img.setAttribute('data-src', url);
               wrapper.appendChild(img);
             }
 
@@ -729,6 +760,7 @@
       if (!hasMedia) {
         container.innerHTML = '<div id="loading">暂无作品内容</div>';
       } else {
+        setupMediaLazyLoad();
         setupScrollObserver();
       }
     }
