@@ -687,16 +687,26 @@
             const wrapper = document.createElement('div');
             wrapper.className = 'image-item-wrapper';
 
-            if (isVideoUrl(url)) {
+          // 兼容带有逗号拼接的视频与封面格式 (例如: videoUrl, posterUrl)
+            const mediaParts = url.split(',').map(s => s.trim());
+            const videoSrc = mediaParts[0];
+            const posterSrc = mediaParts[1] || '';
+
+            if (isVideoUrl(videoSrc)) {
               const video = document.createElement('video');
               video.className = 'lazy-media';
               
-              const videoSrcWithTime = url.includes('#') ? url : `${url}#t=0.001`;
-              video.setAttribute('data-src', videoSrcWithTime);
+              // 如果传了封面图，直接使用 poster 属性；没传则拼接 #t=0.001 兜底
+              if (posterSrc) {
+                video.poster = posterSrc;
+                video.setAttribute('data-src', videoSrc);
+              } else {
+                const videoSrcWithTime = videoSrc.includes('#') ? videoSrc : `${videoSrc}#t=0.001`;
+                video.setAttribute('data-src', videoSrcWithTime);
+              }
               
               video.controls = true;
-              video.preload = 'auto';
-              video.muted = true;
+              video.preload = 'metadata';
               video.playsInline = true;
               video.setAttribute('playsinline', '');
               video.setAttribute('webkit-playsinline', '');
@@ -705,7 +715,7 @@
             } else {
               const img = document.createElement('img');
               img.className = 'lazy-media';
-              img.setAttribute('data-src', url);
+              img.setAttribute('data-src', videoSrc);
               wrapper.appendChild(img);
             }
 
