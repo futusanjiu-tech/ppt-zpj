@@ -705,11 +705,14 @@
                 video.setAttribute('data-src', videoSrcWithTime);
               }
               
-              video.controls = true;
-              video.preload = 'metadata';
-              video.playsInline = true;
-              video.setAttribute('playsinline', '');
-              video.setAttribute('webkit-playsinline', '');
+            video.controls = true;
+video.preload = 'metadata';
+video.muted = true;          // 补上：静音，满足移动端内联渲染与自动播放策略
+video.defaultMuted = true;   // 补上：默认静音兼容
+video.playsInline = true;
+video.setAttribute('playsinline', '');
+video.setAttribute('webkit-playsinline', '');
+video.setAttribute('x5-playsinline', ''); // 补上：微信/QQ浏览器内核兼容
 
               wrapper.appendChild(video);
             } else {
