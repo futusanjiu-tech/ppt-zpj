@@ -693,11 +693,20 @@
             if (isVideoUrl(url)) {
               const video = document.createElement('video');
               video.className = 'lazy-media';
-              video.setAttribute('data-src', url);
+              
+              // 在 URL 末尾拼接 #t=0.001，强制移动端渲染第一帧作为缩略图
+              const videoSrcWithTime = url.includes('#') ? url : `${url}#t=0.001`;
+              video.setAttribute('data-src', videoSrcWithTime);
+              
               video.controls = true;
-              video.preload = 'metadata';
+              video.preload = 'auto'; // 允许预加载首帧
+              video.muted = true;    // 静音（移动端预加载首帧的前提）
               video.playsInline = true;
+              video.setAttribute('playsinline', '');
+              video.setAttribute('webkit-playsinline', '');
+
               wrapper.appendChild(video);
+            }
             } else {
               const img = document.createElement('img');
               img.className = 'lazy-media';
