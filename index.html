@@ -668,11 +668,24 @@
       document.querySelectorAll('.lazy-media').forEach(el => mediaObserver.observe(el));
     }
 
-    function renderPortfolioContent() {
-      const container = document.getElementById('portfolio-container');
-      container.innerHTML = '';
+   function renderPortfolioContent() {
+  const container = document.getElementById('portfolio-container');
+  
+  // 1. 在清空前，先记住并锁死当前容器的实际高度，防止塌陷
+  if (container && container.offsetHeight > 0) {
+   container.style.minHeight = container.offsetHeight + 'px';
+  }
 
-      let hasMedia = false;
+  // 2. 原有的清空与重绘逻辑
+  container.innerHTML = '';
+  let hasMedia = false;
+
+  // 3. 在所有新内容渲染完成后解锁（延迟一会给图片渲染时间）
+  setTimeout(() => {
+    if (container) {
+      container.style.minHeight = '';
+    }
+  }, 300);
 
       categories.forEach(cat => {
         const mediaList = portfolioData[cat.id] || [];
