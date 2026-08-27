@@ -683,20 +683,6 @@
   let hasMedia = false;
 
   // 4. 渲染完成后，立刻恢复原有的滚动位置
-  requestAnimationFrame(() => {
-    window.scrollTo({
-      top: currentScrollY,
-      behavior: 'instant'
-    });
-  });
-
-  // 5. 延迟给图片留出渲染时间，之后恢复自适应高度
-  setTimeout(() => {
-    if (container) {
-      container.style.minHeight = '';
-    }
-  }, 300);
-
       categories.forEach(cat => {
         const mediaList = portfolioData[cat.id] || [];
         if (isShareMode && mediaList.length === 0) return;
@@ -819,6 +805,17 @@ video.setAttribute('x5-playsinline', ''); // 补上：微信/QQ浏览器内核�
         setupMediaLazyLoad();
         setupScrollObserver();
       }
+     requestAnimationFrame(() => {
+    window.scrollTo({
+      top: currentScrollY,
+      behavior: 'instant'
+    });
+
+  setTimeout(() => {
+    if (container) {
+      container.style.minHeight = '';
+    }
+  }, 400);
     }
 
     function setupScrollObserver() {
