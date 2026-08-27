@@ -670,17 +670,27 @@
 
    function renderPortfolioContent() {
   const container = document.getElementById('portfolio-container');
-  
-  // 1. 在清空前，先记住并锁死当前容器的实际高度，防止塌陷
+  // 1. 记录当前页面的实际滚动位置
+  const currentScrollY = window.scrollY || document.documentElement.scrollTop;
+
+  // 2. 锁定当前容器高度，防止高度骤降
   if (container && container.offsetHeight > 0) {
-   container.style.minHeight = container.offsetHeight + 'px';
+    container.style.minHeight = container.offsetHeight + 'px';
   }
 
-  // 2. 原有的清空与重绘逻辑
+  // 3. 执行清空与重新渲染
   container.innerHTML = '';
   let hasMedia = false;
 
-  // 3. 在所有新内容渲染完成后解锁（延迟一会给图片渲染时间）
+  // 4. 渲染完成后，立刻恢复原有的滚动位置
+  requestAnimationFrame(() => {
+    window.scrollTo({
+      top: currentScrollY,
+      behavior: 'instant'
+    });
+  });
+
+  // 5. 延迟给图片留出渲染时间，之后恢复自适应高度
   setTimeout(() => {
     if (container) {
       container.style.minHeight = '';
