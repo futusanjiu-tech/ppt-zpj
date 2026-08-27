@@ -340,23 +340,25 @@
       .app-layout { flex-direction: column; }
       .admin-panel { width: 100%; max-height: none; position: static; }
     }
-         /* ===== 新加的移动端边距收紧代码 ===== */
-      body, 
-      main, 
-      #app, 
-      div[class*="container"], 
-      div[class*="wrapper"], 
-      div[class*="portfolio"],
-      div[class*="content"] {
-        padding-left: 10px !important;
-        padding-right: 10px !important;
-        margin-left: 0 !important;
-        margin-right: 0 !important;
-        max-width: 100% !important;
-        width: 100% !important;
-        box-sizing: border-box !important;
-      }
+     /* 手机端精准控制：消除多余外边距，拉满视口宽度 */
+  @media (max-width: 767px) {
+    html, body {
+      padding-left: 0 !important;
+      padding-right: 0 !important;
+      margin-left: 0 !important;
+      margin-right: 0 !important;
+      overflow-x: hidden;
     }
+
+    #app, main, .app-layout {
+      padding-left: 8px !important;
+      padding-right: 8px !important;
+      margin-left: 0 !important;
+      margin-right: 0 !important;
+      width: 100% !important;
+      box-sizing: border-box !important;
+    }
+  }
 </style>
 </head>
 <body>
