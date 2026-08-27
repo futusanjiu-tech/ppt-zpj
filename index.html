@@ -805,13 +805,14 @@ video.setAttribute('x5-playsinline', ''); // 补上：微信/QQ浏览器内核�
         setupMediaLazyLoad();
         setupScrollObserver();
       }
-     requestAnimationFrame(() => {
+   requestAnimationFrame(() => {
     window.scrollTo({
       top: currentScrollY,
       behavior: 'instant'
     });
+  });
 
-setTimeout(() => {
+  setTimeout(() => {
     if (container) {
       container.style.minHeight = '';
     }
