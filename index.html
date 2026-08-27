@@ -340,19 +340,16 @@
       .app-layout { flex-direction: column; }
       .admin-panel { width: 100%; max-height: none; position: static; }
     }
-     /* 手机端精准控制：消除多余外边距，拉满视口宽度 */
+  /* 手机端精准控制：仅收紧作品集内容区边距，不干扰页面滚动与导航栏 */
   @media (max-width: 767px) {
-    html, body {
-      padding-left: 0 !important;
-      padding-right: 0 !important;
-      margin-left: 0 !important;
-      margin-right: 0 !important;
-      overflow-x: hidden;
-    }
-
-    #app, main, .app-layout {
-      padding-left: 8px !important;
-      padding-right: 8px !important;
+    /* 收紧作品集卡片/长图真正的外层包裹容器 */
+    .portfolio-grid,
+    .portfolio-list,
+    .project-card,
+    .preview-container,
+    .content-area {
+      padding-left: 6px !important;
+      padding-right: 6px !important;
       margin-left: 0 !important;
       margin-right: 0 !important;
       width: 100% !important;
