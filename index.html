@@ -3,7 +3,6 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <!-- 网页标题，手机端搜索框与历史记录显示的文字 -->
   <title>作品集展示</title>
   <style>
     :root {
@@ -19,7 +18,6 @@
       padding: 0;
     }
     html, body {
-      scroll-behavior: smooth;
       background-color: var(--bg-color);
       color: var(--text-color);
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
@@ -217,13 +215,16 @@
       scrollbar-width: none;
     }
     .category-nav::-webkit-scrollbar { display: none; }
+    
+    /* 替换为 button 样式，消除 a 标签锚点跳转 */
     .nav-item {
       color: #8e8e93;
-      text-decoration: none;
       font-size: 14px;
       padding: 6px 16px;
       border-radius: 20px;
       background: rgba(255, 255, 255, 0.08);
+      border: none;
+      cursor: pointer;
       transition: all 0.25s ease;
       display: inline-flex;
       align-items: center;
@@ -339,21 +340,7 @@
     @media (max-width: 768px) {
       .app-layout { flex-direction: column; }
       .admin-panel { width: 100%; max-height: none; position: static; }
-    }
-    /* 手机端精准控制：仅收紧作品集内容区边距，不干扰页面滚动与导航栏 */
-    @media (max-width: 767px) {
-      .portfolio-grid,
-      .portfolio-list,
-      .project-card,
-      .preview-container,
-      .content-area {
-        padding-left: 6px !important;
-        padding-right: 6px !important;
-        margin-left: 0 !important;
-        margin-right: 0 !important;
-        width: 100% !important;
-        box-sizing: border-box !important;
-      }
+      main { padding: 12px; }
     }
   </style>
 </head>
@@ -507,15 +494,19 @@
       if (manageList) manageList.innerHTML = '';
 
       categories.forEach((cat, idx) => {
-        const navItem = document.createElement('a');
+        // 使用 button 代替 <a>，避开 url hash 触发的画面跳跃
+        const navItem = document.createElement('button');
         navItem.className = `nav-item ${idx === 0 ? 'active' : ''}`;
-        navItem.href = `#${cat.id}`;
         navItem.innerText = cat.name;
         navItem.dataset.id = cat.id;
         
         navItem.addEventListener('click', () => {
           document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
           navItem.classList.add('active');
+          const targetSection = document.getElementById(cat.id);
+          if (targetSection) {
+            targetSection.scrollIntoView({ behavior: 'smooth' });
+          }
         });
 
         navContainer.appendChild(navItem);
@@ -669,15 +660,14 @@
 
     function renderPortfolioContent() {
       const container = document.getElementById('portfolio-container');
-      // 1. 记录当前页面的真实滚动高度
+      // 1. 精准锁定当前视口垂直滚动像素点
       const currentScrollY = window.scrollY || document.documentElement.scrollTop;
 
-      // 2. 锁定当前容器高度，防止渲染瞬间页面高度抖动坍塌
+      // 2. 锁定高度，规避重新生成列表导致的画面瞬跳
       if (container && container.offsetHeight > 0) {
         container.style.minHeight = container.offsetHeight + 'px';
       }
 
-      // 3. 执行清空与重新渲染
       container.innerHTML = '';
       let hasMedia = false;
 
@@ -802,13 +792,9 @@
         setupScrollObserver();
       }
 
-      // 4. DOM 搭建完成后，无感知地复原之前的滚动点
-      window.scrollTo({
-        top: currentScrollY,
-        behavior: 'instant'
-      });
+      // 强行保持之前的原生像素点
+      window.scrollTo(0, currentScrollY);
 
-      // 5. 解锁容器的高度限制
       setTimeout(() => {
         if (container) {
           container.style.minHeight = '';
