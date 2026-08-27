@@ -272,7 +272,7 @@
     .image-item-wrapper {
       position: relative;
       user-select: none;
-      background-color: transparent; /* 改为透明 */
+      background-color: transparent;
       border-radius: 8px;
       overflow: hidden;
     }
@@ -281,8 +281,8 @@
       height: auto;
       border-radius: 8px;
       display: block;
-      background-color: transparent; /* 改为透明 */
-      object-fit: cover;               /* 填满容器，消除余灰 */
+      background-color: transparent;
+      object-fit: cover;
       transition: opacity 0.3s;
     }
 
@@ -340,23 +340,22 @@
       .app-layout { flex-direction: column; }
       .admin-panel { width: 100%; max-height: none; position: static; }
     }
-  /* 手机端精准控制：仅收紧作品集内容区边距，不干扰页面滚动与导航栏 */
-  @media (max-width: 767px) {
-    /* 收紧作品集卡片/长图真正的外层包裹容器 */
-    .portfolio-grid,
-    .portfolio-list,
-    .project-card,
-    .preview-container,
-    .content-area {
-      padding-left: 6px !important;
-      padding-right: 6px !important;
-      margin-left: 0 !important;
-      margin-right: 0 !important;
-      width: 100% !important;
-      box-sizing: border-box !important;
+    /* 手机端精准控制：仅收紧作品集内容区边距，不干扰页面滚动与导航栏 */
+    @media (max-width: 767px) {
+      .portfolio-grid,
+      .portfolio-list,
+      .project-card,
+      .preview-container,
+      .content-area {
+        padding-left: 6px !important;
+        padding-right: 6px !important;
+        margin-left: 0 !important;
+        margin-right: 0 !important;
+        width: 100% !important;
+        box-sizing: border-box !important;
+      }
     }
-  }
-</style>
+  </style>
 </head>
 <body>
 
@@ -645,7 +644,7 @@
       renderPortfolioContent();
     }
 
-   let mediaObserver = null;
+    let mediaObserver = null;
     function setupMediaLazyLoad() {
       if (mediaObserver) mediaObserver.disconnect();
 
@@ -668,21 +667,20 @@
       document.querySelectorAll('.lazy-media').forEach(el => mediaObserver.observe(el));
     }
 
-   function renderPortfolioContent() {
-  const container = document.getElementById('portfolio-container');
-  // 1. 记录当前页面的实际滚动位置
-  const currentScrollY = window.scrollY || document.documentElement.scrollTop;
+    function renderPortfolioContent() {
+      const container = document.getElementById('portfolio-container');
+      // 1. 记录当前页面的真实滚动高度
+      const currentScrollY = window.scrollY || document.documentElement.scrollTop;
 
-  // 2. 锁定当前容器高度，防止高度骤降
-  if (container && container.offsetHeight > 0) {
-    container.style.minHeight = container.offsetHeight + 'px';
-  }
+      // 2. 锁定当前容器高度，防止渲染瞬间页面高度抖动坍塌
+      if (container && container.offsetHeight > 0) {
+        container.style.minHeight = container.offsetHeight + 'px';
+      }
 
-  // 3. 执行清空与重新渲染
-  container.innerHTML = '';
-  let hasMedia = false;
+      // 3. 执行清空与重新渲染
+      container.innerHTML = '';
+      let hasMedia = false;
 
-  // 4. 渲染完成后，立刻恢复原有的滚动位置
       categories.forEach(cat => {
         const mediaList = portfolioData[cat.id] || [];
         if (isShareMode && mediaList.length === 0) return;
@@ -712,7 +710,6 @@
             const wrapper = document.createElement('div');
             wrapper.className = 'image-item-wrapper';
 
-          // 兼容带有逗号拼接的视频与封面格式 (例如: videoUrl, posterUrl)
             const mediaParts = url.split(',').map(s => s.trim());
             const videoSrc = mediaParts[0];
             const posterSrc = mediaParts[1] || '';
@@ -721,7 +718,6 @@
               const video = document.createElement('video');
               video.className = 'lazy-media';
               
-              // 如果传了封面图，直接使用 poster 属性；没传则拼接 #t=0.001 兜底
               if (posterSrc) {
                 video.poster = posterSrc;
                 video.setAttribute('data-src', videoSrc);
@@ -730,14 +726,14 @@
                 video.setAttribute('data-src', videoSrcWithTime);
               }
               
-            video.controls = true;
-video.preload = 'metadata';
-video.muted = true;          // 补上：静音，满足移动端内联渲染与自动播放策略
-video.defaultMuted = true;   // 补上：默认静音兼容
-video.playsInline = true;
-video.setAttribute('playsinline', '');
-video.setAttribute('webkit-playsinline', '');
-video.setAttribute('x5-playsinline', ''); // 补上：微信/QQ浏览器内核兼容
+              video.controls = true;
+              video.preload = 'metadata';
+              video.muted = true;
+              video.defaultMuted = true;
+              video.playsInline = true;
+              video.setAttribute('playsinline', '');
+              video.setAttribute('webkit-playsinline', '');
+              video.setAttribute('x5-playsinline', '');
 
               wrapper.appendChild(video);
             } else {
@@ -805,19 +801,21 @@ video.setAttribute('x5-playsinline', ''); // 补上：微信/QQ浏览器内核�
         setupMediaLazyLoad();
         setupScrollObserver();
       }
-   requestAnimationFrame(() => {
-    window.scrollTo({
-      top: currentScrollY,
-      behavior: 'instant'
-    });
-  });
 
-  setTimeout(() => {
-    if (container) {
-      container.style.minHeight = '';
+      // 4. DOM 搭建完成后，无感知地复原之前的滚动点
+      window.scrollTo({
+        top: currentScrollY,
+        behavior: 'instant'
+      });
+
+      // 5. 解锁容器的高度限制
+      setTimeout(() => {
+        if (container) {
+          container.style.minHeight = '';
+        }
+      }, 100);
     }
-  }, 400);
-}
+
     function setupScrollObserver() {
       const observerOptions = {
         root: null,
@@ -832,7 +830,6 @@ video.setAttribute('x5-playsinline', ''); // 补上：微信/QQ浏览器内核�
             document.querySelectorAll('.nav-item').forEach(nav => {
               if (nav.dataset.id === id) {
                 nav.classList.add('active');
-                nav.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
               } else {
                 nav.classList.remove('active');
               }
