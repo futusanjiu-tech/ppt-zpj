@@ -3,6 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <!-- 网页标题，手机端搜索框与历史记录显示的文字 -->
   <title>作品集展示</title>
   <style>
     :root {
@@ -18,6 +19,7 @@
       padding: 0;
     }
     html, body {
+      scroll-behavior: smooth;
       background-color: var(--bg-color);
       color: var(--text-color);
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
@@ -215,15 +217,13 @@
       scrollbar-width: none;
     }
     .category-nav::-webkit-scrollbar { display: none; }
-    
     .nav-item {
       color: #8e8e93;
+      text-decoration: none;
       font-size: 14px;
       padding: 6px 16px;
       border-radius: 20px;
       background: rgba(255, 255, 255, 0.08);
-      border: none;
-      cursor: pointer;
       transition: all 0.25s ease;
       display: inline-flex;
       align-items: center;
@@ -272,7 +272,8 @@
     .image-item-wrapper {
       position: relative;
       user-select: none;
-      background-color: transparent;
+      min-height: 200px;
+      background-color: rgba(255, 255, 255, 0.03);
       border-radius: 8px;
       overflow: hidden;
     }
@@ -281,8 +282,8 @@
       height: auto;
       border-radius: 8px;
       display: block;
-      background-color: transparent;
-      object-fit: cover;
+      background-color: rgba(255, 255, 255, 0.05);
+      object-fit: contain;
       transition: opacity 0.3s;
     }
 
@@ -339,7 +340,6 @@
     @media (max-width: 768px) {
       .app-layout { flex-direction: column; }
       .admin-panel { width: 100%; max-height: none; position: static; }
-      main { padding: 12px; }
     }
   </style>
 </head>
@@ -423,15 +423,11 @@
 
     let primaryColor = '#007aff';
     let bgColor = '#121212';
-    
-    // 全局防抖与重绘锁标记，防止监听器互相打架
-    let isRendering = false;
-    let navObserver = null;
 
     let categories = [
-      { id: 'cat-3d', name: '营销活动' },
-      { id: 'cat-ui', name: '视频' },
-      { id: 'cat-ip', name: '长图H5' }
+      { id: 'cat-3d', name: '活动页H5' },
+      { id: 'cat-ui', name: 'UI 设计' },
+      { id: 'cat-ip', name: '3D 视觉' }
     ];
 
     let portfolioData = {
@@ -497,18 +493,15 @@
       if (manageList) manageList.innerHTML = '';
 
       categories.forEach((cat, idx) => {
-        const navItem = document.createElement('button');
+        const navItem = document.createElement('a');
         navItem.className = `nav-item ${idx === 0 ? 'active' : ''}`;
+        navItem.href = `#${cat.id}`;
         navItem.innerText = cat.name;
         navItem.dataset.id = cat.id;
         
         navItem.addEventListener('click', () => {
           document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
           navItem.classList.add('active');
-          const targetSection = document.getElementById(cat.id);
-          if (targetSection) {
-            targetSection.scrollIntoView({ behavior: 'smooth' });
-          }
         });
 
         navContainer.appendChild(navItem);
@@ -629,38 +622,14 @@
       });
     }
 
-   function moveImage(catId, fromIndex, toIndex, event) {
-  const list = portfolioData[catId];
-  if (!list || toIndex < 0 || toIndex >= list.length) return;
+    function moveImage(catId, fromIndex, toIndex) {
+      const list = portfolioData[catId];
+      if (!list || toIndex < 0 || toIndex >= list.length) return;
+      const item = list.splice(fromIndex, 1)[0];
+      list.splice(toIndex, 0, item);
+      renderPortfolioContent();
+    }
 
-  // 获取当前触发移动的图片卡片 DOM
-  const currentCard = event ? event.target.closest('.image-item-wrapper') : null;
-  const rectBefore = currentCard ? currentCard.getBoundingClientRect() : null;
-
-  // 调整数据数组顺序
-  const item = list.splice(fromIndex, 1)[0];
-  list.splice(toIndex, 0, item);
-
-  // 重新渲染 DOM
-  renderPortfolioContent();
-
-  // 精准恢复相对视口位置，防止跳转
-  if (rectBefore) {
-    requestAnimationFrame(() => {
-      const categorySection = document.getElementById(catId);
-      if (categorySection) {
-        const wrappers = categorySection.querySelectorAll('.image-item-wrapper');
-        const targetCard = wrappers[toIndex];
-        if (targetCard) {
-          const rectAfter = targetCard.getBoundingClientRect();
-          // 计算位置偏差并精准微调滚动条
-          const offset = rectAfter.top - rectBefore.top;
-          window.scrollBy(0, offset);
-        }
-      }
-    });
-  }
-}
     let mediaObserver = null;
     function setupMediaLazyLoad() {
       if (mediaObserver) mediaObserver.disconnect();
@@ -678,7 +647,7 @@
           }
         });
       }, {
-        rootMargin: '300px 0px 300px 0px'
+        rootMargin: '200px 0px 200px 0px'
       });
 
       document.querySelectorAll('.lazy-media').forEach(el => mediaObserver.observe(el));
@@ -686,22 +655,8 @@
 
     function renderPortfolioContent() {
       const container = document.getElementById('portfolio-container');
-      if (!container) return;
-
-      isRendering = true;
-
-      // 记录当前滚动位置，以及【每一个独立分类】的当前高度，防止重绘时瞬间塌陷
-      const currentScrollY = window.scrollY || document.documentElement.scrollTop;
-      const sectionHeights = {};
-      document.querySelectorAll('.category-section').forEach(sec => {
-        sectionHeights[sec.id] = sec.offsetHeight;
-      });
-
-      if (container.offsetHeight > 0) {
-        container.style.minHeight = container.offsetHeight + 'px';
-      }
-
       container.innerHTML = '';
+
       let hasMedia = false;
 
       categories.forEach(cat => {
@@ -713,11 +668,6 @@
         const section = document.createElement('section');
         section.className = 'category-section';
         section.id = cat.id;
-
-        // 单独锁死每个分类的高度
-        if (sectionHeights[cat.id]) {
-          section.style.minHeight = sectionHeights[cat.id] + 'px';
-        }
 
         const title = document.createElement('div');
         title.className = 'category-title';
@@ -738,36 +688,25 @@
             const wrapper = document.createElement('div');
             wrapper.className = 'image-item-wrapper';
 
-            const mediaParts = url.split(',').map(s => s.trim());
-            const videoSrc = mediaParts[0];
-            const posterSrc = mediaParts[1] || '';
-
-            if (isVideoUrl(videoSrc)) {
+            if (isVideoUrl(url)) {
               const video = document.createElement('video');
               video.className = 'lazy-media';
               
-              if (posterSrc) {
-                video.poster = posterSrc;
-                video.setAttribute('data-src', videoSrc);
-              } else {
-                const videoSrcWithTime = videoSrc.includes('#') ? videoSrc : `${videoSrc}#t=0.001`;
-                video.setAttribute('data-src', videoSrcWithTime);
-              }
+              const videoSrcWithTime = url.includes('#') ? url : `${url}#t=0.001`;
+              video.setAttribute('data-src', videoSrcWithTime);
               
               video.controls = true;
-              video.preload = 'metadata';
+              video.preload = 'auto';
               video.muted = true;
-              video.defaultMuted = true;
               video.playsInline = true;
               video.setAttribute('playsinline', '');
               video.setAttribute('webkit-playsinline', '');
-              video.setAttribute('x5-playsinline', '');
 
               wrapper.appendChild(video);
             } else {
               const img = document.createElement('img');
               img.className = 'lazy-media';
-              img.setAttribute('data-src', videoSrc);
+              img.setAttribute('data-src', url);
               wrapper.appendChild(img);
             }
 
@@ -779,7 +718,7 @@
                 const upBtn = document.createElement('button');
                 upBtn.className = 'img-action-btn';
                 upBtn.innerText = '▲ 上移';
-               upBtn.onclick = (e) => moveImage(cat.id, idx, idx - 1, e);
+                upBtn.onclick = () => moveImage(cat.id, idx, idx - 1);
                 actionsDiv.appendChild(upBtn);
               }
 
@@ -787,7 +726,7 @@
                 const downBtn = document.createElement('button');
                 downBtn.className = 'img-action-btn';
                 downBtn.innerText = '▼ 下移';
-                downBtn.onclick = (e) => moveImage(cat.id, idx, idx + 1, e);
+                downBtn.onclick = () => moveImage(cat.id, idx, idx + 1);
                 actionsDiv.appendChild(downBtn);
               }
 
@@ -829,40 +768,23 @@
         setupMediaLazyLoad();
         setupScrollObserver();
       }
-
-      window.scrollTo(0, currentScrollY);
-
-      // 延迟释放高度锁，给懒加载图片留出足够的渲染时间
-      setTimeout(() => {
-        container.style.minHeight = '';
-        document.querySelectorAll('.category-section').forEach(sec => {
-          sec.style.minHeight = '';
-        });
-        isRendering = false;
-      }, 350);
     }
 
     function setupScrollObserver() {
-      // 每次重新绑定前，先断开旧的监听器
-      if (navObserver) {
-        navObserver.disconnect();
-      }
-
       const observerOptions = {
         root: null,
         rootMargin: '-20% 0px -60% 0px',
         threshold: 0
       };
 
-      navObserver = new IntersectionObserver((entries) => {
-        if (isRendering) return;
-
+      const observer = new IntersectionObserver((entries) => {
         entries.forEach(entry => {
           if (entry.isIntersecting) {
             const id = entry.target.id;
             document.querySelectorAll('.nav-item').forEach(nav => {
               if (nav.dataset.id === id) {
                 nav.classList.add('active');
+                nav.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
               } else {
                 nav.classList.remove('active');
               }
@@ -871,7 +793,7 @@
         });
       }, observerOptions);
 
-      document.querySelectorAll('.category-section').forEach(sec => navObserver.observe(sec));
+      document.querySelectorAll('.category-section').forEach(sec => observer.observe(sec));
     }
 
     async function loadPortfolioData() {
