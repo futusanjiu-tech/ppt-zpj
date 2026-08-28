@@ -216,7 +216,6 @@
     }
     .category-nav::-webkit-scrollbar { display: none; }
     
-    /* 替换为 button 样式，消除 a 标签锚点跳转 */
     .nav-item {
       color: #8e8e93;
       font-size: 14px;
@@ -424,11 +423,14 @@
 
     let primaryColor = '#007aff';
     let bgColor = '#121212';
+    
+    // 全局防抖与重绘锁标记
+    let isRendering = false;
 
     let categories = [
-      { id: 'cat-3d', name: '活动页H5' },
-      { id: 'cat-ui', name: 'UI 设计' },
-      { id: 'cat-ip', name: '3D 视觉' }
+      { id: 'cat-3d', name: '营销活动' },
+      { id: 'cat-ui', name: '视频' },
+      { id: 'cat-ip', name: '长图H5' }
     ];
 
     let portfolioData = {
@@ -494,7 +496,6 @@
       if (manageList) manageList.innerHTML = '';
 
       categories.forEach((cat, idx) => {
-        // 使用 button 代替 <a>，避开 url hash 触发的画面跳跃
         const navItem = document.createElement('button');
         navItem.className = `nav-item ${idx === 0 ? 'active' : ''}`;
         navItem.innerText = cat.name;
@@ -660,12 +661,14 @@
 
     function renderPortfolioContent() {
       const container = document.getElementById('portfolio-container');
-      // 1. 精准锁定当前视口垂直滚动像素点
-      const currentScrollY = window.scrollY || document.documentElement.scrollTop;
+      if (!container) return;
 
-      // 2. 锁定高度，规避重新生成列表导致的画面瞬跳
-      if (container && container.offsetHeight > 0) {
-        container.style.minHeight = container.offsetHeight + 'px';
+      isRendering = true;
+
+      const currentScrollY = window.scrollY || document.documentElement.scrollTop;
+      const currentHeight = container.offsetHeight;
+      if (currentHeight > 0) {
+        container.style.minHeight = currentHeight + 'px';
       }
 
       container.innerHTML = '';
@@ -792,14 +795,12 @@
         setupScrollObserver();
       }
 
-      // 强行保持之前的原生像素点
       window.scrollTo(0, currentScrollY);
 
       setTimeout(() => {
-        if (container) {
-          container.style.minHeight = '';
-        }
-      }, 100);
+        container.style.minHeight = '';
+        isRendering = false;
+      }, 200);
     }
 
     function setupScrollObserver() {
@@ -810,6 +811,8 @@
       };
 
       const observer = new IntersectionObserver((entries) => {
+        if (isRendering) return;
+
         entries.forEach(entry => {
           if (entry.isIntersecting) {
             const id = entry.target.id;
