@@ -629,14 +629,38 @@
       });
     }
 
-    function moveImage(catId, fromIndex, toIndex) {
-      const list = portfolioData[catId];
-      if (!list || toIndex < 0 || toIndex >= list.length) return;
-      const item = list.splice(fromIndex, 1)[0];
-      list.splice(toIndex, 0, item);
-      renderPortfolioContent();
-    }
+   function moveImage(catId, fromIndex, toIndex, event) {
+  const list = portfolioData[catId];
+  if (!list || toIndex < 0 || toIndex >= list.length) return;
 
+  // 获取当前触发移动的图片卡片 DOM
+  const currentCard = event ? event.target.closest('.image-item-wrapper') : null;
+  const rectBefore = currentCard ? currentCard.getBoundingClientRect() : null;
+
+  // 调整数据数组顺序
+  const item = list.splice(fromIndex, 1)[0];
+  list.splice(toIndex, 0, item);
+
+  // 重新渲染 DOM
+  renderPortfolioContent();
+
+  // 精准恢复相对视口位置，防止跳转
+  if (rectBefore) {
+    requestAnimationFrame(() => {
+      const categorySection = document.getElementById(catId);
+      if (categorySection) {
+        const wrappers = categorySection.querySelectorAll('.image-item-wrapper');
+        const targetCard = wrappers[toIndex];
+        if (targetCard) {
+          const rectAfter = targetCard.getBoundingClientRect();
+          // 计算位置偏差并精准微调滚动条
+          const offset = rectAfter.top - rectBefore.top;
+          window.scrollBy(0, offset);
+        }
+      }
+    });
+  }
+}
     let mediaObserver = null;
     function setupMediaLazyLoad() {
       if (mediaObserver) mediaObserver.disconnect();
@@ -755,7 +779,7 @@
                 const upBtn = document.createElement('button');
                 upBtn.className = 'img-action-btn';
                 upBtn.innerText = '▲ 上移';
-                upBtn.onclick = () => moveImage(cat.id, idx, idx - 1);
+               upBtn.onclick = (e) => moveImage(cat.id, idx, idx - 1, e);
                 actionsDiv.appendChild(upBtn);
               }
 
@@ -763,7 +787,7 @@
                 const downBtn = document.createElement('button');
                 downBtn.className = 'img-action-btn';
                 downBtn.innerText = '▼ 下移';
-                downBtn.onclick = () => moveImage(cat.id, idx, idx + 1);
+                downBtn.onclick = (e) => moveImage(cat.id, idx, idx + 1, e);
                 actionsDiv.appendChild(downBtn);
               }
 
