@@ -629,36 +629,126 @@
       });
     }
 
-   function moveImage(catId, fromIndex, toIndex, event) {
+  function moveImage(catId, fromIndex, toIndex, event) {
   const list = portfolioData[catId];
   if (!list || toIndex < 0 || toIndex >= list.length) return;
 
-  // 获取当前触发移动的图片卡片 DOM
+  // 1. 获取当前点击的按钮和它所在的卡片在视口中的绝对位置
   const currentCard = event ? event.target.closest('.image-item-wrapper') : null;
-  const rectBefore = currentCard ? currentCard.getBoundingClientRect() : null;
+  const topBefore = currentCard ? currentCard.getBoundingClientRect().top : 0;
 
-  // 调整数据数组顺序
+  // 2. 调整数据数组中的顺序
   const item = list.splice(fromIndex, 1)[0];
   list.splice(toIndex, 0, item);
 
-  // 重新渲染 DOM
-  renderPortfolioContent();
+  // 3. 【核心优化】只局部刷新当前分类，绝对不重绘整个页面！
+  const sectionElem = document.getElementById(catId);
+  if (sectionElem) {
+    // 临时关闭滚动监听，防止干扰
+    if (navObserver) navObserver.disconnect();
 
-  // 精准恢复相对视口位置，防止跳转
-  if (rectBefore) {
-    requestAnimationFrame(() => {
-      const categorySection = document.getElementById(catId);
-      if (categorySection) {
-        const wrappers = categorySection.querySelectorAll('.image-item-wrapper');
-        const targetCard = wrappers[toIndex];
-        if (targetCard) {
-          const rectAfter = targetCard.getBoundingClientRect();
-          // 计算位置偏差并精准微调滚动条
-          const offset = rectAfter.top - rectBefore.top;
-          window.scrollBy(0, offset);
+    // 找到当前分类下的图片网格容器
+    const gridElem = sectionElem.querySelector('.image-grid');
+    if (gridElem) {
+      gridElem.innerHTML = ''; // 只清空当前分类的网格
+
+      // 重新生成当前分类的图片/视频列表
+      list.forEach((url, idx) => {
+        const wrapper = document.createElement('div');
+        wrapper.className = 'image-item-wrapper';
+
+        const mediaParts = url.split(',').map(s => s.trim());
+        const videoSrc = mediaParts[0];
+        const posterSrc = mediaParts[1] || '';
+
+        if (isVideoUrl(videoSrc)) {
+          const video = document.createElement('video');
+          video.className = 'lazy-media';
+          if (posterSrc) {
+            video.poster = posterSrc;
+            video.setAttribute('data-src', videoSrc);
+          } else {
+            const videoSrcWithTime = videoSrc.includes('#') ? videoSrc : `${videoSrc}#t=0.001`;
+            video.setAttribute('data-src', videoSrcWithTime);
+          }
+          video.controls = true;
+          video.preload = 'metadata';
+          video.muted = true;
+          video.defaultMuted = true;
+          video.playsInline = true;
+          wrapper.appendChild(video);
+        } else {
+          const img = document.createElement('img');
+          img.className = 'lazy-media';
+          img.setAttribute('data-src', videoSrc);
+          wrapper.appendChild(img);
         }
-      }
-    });
+
+        if (!isShareMode) {
+          const actionsDiv = document.createElement('div');
+          actionsDiv.className = 'img-actions';
+
+          if (idx > 0) {
+            const upBtn = document.createElement('button');
+            upBtn.className = 'img-action-btn';
+            upBtn.innerText = '▲ 上移';
+            upBtn.onclick = (e) => moveImage(catId, idx, idx - 1, e);
+            actionsDiv.appendChild(upBtn);
+          }
+
+          if (idx < list.length - 1) {
+            const downBtn = document.createElement('button');
+            downBtn.className = 'img-action-btn';
+            downBtn.innerText = '▼ 下移';
+            downBtn.onclick = (e) => moveImage(catId, idx, idx + 1, e);
+            actionsDiv.appendChild(downBtn);
+          }
+
+          const replaceBtn = document.createElement('button');
+          replaceBtn.className = 'img-action-btn replace-btn';
+          replaceBtn.innerText = '替换';
+          replaceBtn.onclick = () => {
+            const newUrl = prompt('请输入替换后的新图片/视频链接：', url);
+            if (newUrl && newUrl.trim() && newUrl.trim() !== url) {
+              list[idx] = newUrl.trim();
+              moveImage(catId, idx, idx, null); // 局部刷新自身
+            }
+          };
+
+          const delBtn = document.createElement('button');
+          delBtn.className = 'img-action-btn delete-btn';
+          delBtn.innerText = '删除';
+          delBtn.onclick = () => {
+            list.splice(idx, 1);
+            moveImage(catId, Math.max(0, idx - 1), Math.max(0, idx - 1), null); // 局部刷新自身
+          };
+
+          actionsDiv.appendChild(replaceBtn);
+          actionsDiv.appendChild(delBtn);
+          wrapper.appendChild(actionsDiv);
+        }
+
+        gridElem.appendChild(wrapper);
+      });
+    }
+
+    // 4. 重新绑定懒加载与滚动监听
+    setupMediaLazyLoad();
+    setTimeout(() => {
+      if (navObserver) setupScrollObserver();
+    }, 100);
+
+    // 5. 微调滚动条，确保被移动的卡片位置丝毫不差
+    if (currentCard) {
+      requestAnimationFrame(() => {
+        const newCards = sectionElem.querySelectorAll('.image-item-wrapper');
+        const targetCard = newCards[toIndex];
+        if (targetCard) {
+          const topAfter = targetCard.getBoundingClientRect().top;
+          window.scrollBy(0, topAfter - topBefore);
+        }
+      });
+    }
   }
 }
     let mediaObserver = null;
