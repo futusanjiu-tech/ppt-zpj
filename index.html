@@ -685,11 +685,21 @@
       const replaceBtn = document.createElement('button');
       replaceBtn.className = 'img-action-btn replace-btn';
       replaceBtn.innerText = '替换';
-      replaceBtn.onclick = () => {
-        const newUrl = prompt('请输入替换后的新图片/视频链接：', list[idx]);
-        if (newUrl && newUrl.trim() && newUrl.trim() !== list[idx]) {
-          list[idx] = newUrl.trim();
-          moveImage(catId, idx, idx, null);
+     replaceBtn.onclick = () => {
+        const oldUrl = list[idx];
+        const newUrl = prompt('请输入替换后的新图片/视频链接：', oldUrl);
+        if (newUrl && newUrl.trim() && newUrl.trim() !== oldUrl) {
+          const validNewUrl = newUrl.trim();
+          list[idx] = validNewUrl;
+          
+          // 手动找到当前卡片里的 img 或 video 节点并刷新 src
+          const mediaElem = wrapper.querySelector('img, video');
+          if (mediaElem) {
+            mediaElem.src = validNewUrl;
+            if (mediaElem.tagName.toLowerCase() === 'video') {
+              mediaElem.load();
+            }
+          }
         }
       };
 
