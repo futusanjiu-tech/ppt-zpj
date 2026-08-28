@@ -744,11 +744,12 @@
         sectionHeights[sec.id] = sec.offsetHeight;
       });
 
-      if (container.offsetHeight > 0) {
-        container.style.minHeight = container.offsetHeight + 'px';
-      }
+     // if (container.offsetHeight > 0) {
+  //   container.style.minHeight = container.offsetHeight + 'px';
+  // }
 
       container.innerHTML = '';
+      container.style.minHeight = ''; // 重置最小高度，确保高度完全自适应
       let hasMedia = false;
 
       categories.forEach(cat => {
