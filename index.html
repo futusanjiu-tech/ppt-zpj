@@ -424,8 +424,9 @@
     let primaryColor = '#007aff';
     let bgColor = '#121212';
     
-    // 全局防抖与重绘锁标记
+    // 全局防抖与重绘锁标记，防止监听器互相打架
     let isRendering = false;
+    let navObserver = null;
 
     let categories = [
       { id: 'cat-3d', name: '营销活动' },
@@ -665,10 +666,15 @@
 
       isRendering = true;
 
+      // 记录当前滚动位置，以及【每一个独立分类】的当前高度，防止重绘时瞬间塌陷
       const currentScrollY = window.scrollY || document.documentElement.scrollTop;
-      const currentHeight = container.offsetHeight;
-      if (currentHeight > 0) {
-        container.style.minHeight = currentHeight + 'px';
+      const sectionHeights = {};
+      document.querySelectorAll('.category-section').forEach(sec => {
+        sectionHeights[sec.id] = sec.offsetHeight;
+      });
+
+      if (container.offsetHeight > 0) {
+        container.style.minHeight = container.offsetHeight + 'px';
       }
 
       container.innerHTML = '';
@@ -683,6 +689,11 @@
         const section = document.createElement('section');
         section.className = 'category-section';
         section.id = cat.id;
+
+        // 单独锁死每个分类的高度
+        if (sectionHeights[cat.id]) {
+          section.style.minHeight = sectionHeights[cat.id] + 'px';
+        }
 
         const title = document.createElement('div');
         title.className = 'category-title';
@@ -797,20 +808,29 @@
 
       window.scrollTo(0, currentScrollY);
 
+      // 延迟释放高度锁，给懒加载图片留出足够的渲染时间
       setTimeout(() => {
         container.style.minHeight = '';
+        document.querySelectorAll('.category-section').forEach(sec => {
+          sec.style.minHeight = '';
+        });
         isRendering = false;
-      }, 200);
+      }, 350);
     }
 
     function setupScrollObserver() {
+      // 每次重新绑定前，先断开旧的监听器
+      if (navObserver) {
+        navObserver.disconnect();
+      }
+
       const observerOptions = {
         root: null,
         rootMargin: '-20% 0px -60% 0px',
         threshold: 0
       };
 
-      const observer = new IntersectionObserver((entries) => {
+      navObserver = new IntersectionObserver((entries) => {
         if (isRendering) return;
 
         entries.forEach(entry => {
@@ -827,7 +847,7 @@
         });
       }, observerOptions);
 
-      document.querySelectorAll('.category-section').forEach(sec => observer.observe(sec));
+      document.querySelectorAll('.category-section').forEach(sec => navObserver.observe(sec));
     }
 
     async function loadPortfolioData() {
