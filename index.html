@@ -738,7 +738,7 @@
       if (navObserver) setupScrollObserver();
     }, 100);
 
-   // 5. 微调滚动条，确保被移动的卡片位置丝毫不差
+  // 5. 微调滚动条，确保被移动的卡片位置丝毫不差
     if (currentCard) {
       requestAnimationFrame(() => {
         const newCards = sectionElem.querySelectorAll('.image-item-wrapper');
@@ -750,7 +750,8 @@
         }
       });
     }
-}
+  } 
+}   
     let mediaObserver = null;
     function setupMediaLazyLoad() {
       if (mediaObserver) mediaObserver.disconnect();
