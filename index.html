@@ -739,16 +739,24 @@
     }, 100);
 
   // 5. 微调滚动条，确保被移动的卡片位置丝毫不差
+   // 5. 绝对坐标补偿：防止图片高度未加载导致位置对不准
     if (currentCard) {
-      requestAnimationFrame(() => {
+      // 记录卡片点击前距离视口顶部的相对距离
+      const cardOffsetFromViewport = topBefore;
+      
+     setTimeout(() => {
         const newCards = sectionElem.querySelectorAll('.image-item-wrapper');
         const targetCard = newCards[toIndex];
         if (targetCard) {
-          const rectAfter = targetCard.getBoundingClientRect();
-          const offset = rectAfter.top - topBefore;
-          window.scrollBy(0, offset);
+          const elementPosition = targetCard.getBoundingClientRect().top + window.scrollY;
+          const offsetPosition = elementPosition - cardOffsetFromViewport;
+
+          window.scrollTo({
+            top: offsetPosition,
+            behavior: 'instant'
+          });
         }
-      });
+      }, 50); // 给浏览器 50ms 渲染并计算高度的时间
     }
   } 
 }   
