@@ -345,13 +345,13 @@
 </head>
 <body>
 
-  <header id="site-header">
+  <header id="site-header" style="display: none;">
     <h1 id="page-main-title">作品集管理后台</h1>
     <span class="badge">管理模式</span>
   </header>
 
   <div class="app-layout">
-    <div class="admin-panel" id="admin-panel">
+    <div class="admin-panel" id="admin-panel" style="display: none;">
       <div class="panel-section">
         <div class="panel-title">1. 主题视觉设置</div>
         
@@ -417,15 +417,19 @@
 
   <script>
     const SUPABASE_API_KEY = 'sb_publishable_WlJg39rJcx_L7lO8wDG-zw_qTE4fF5o';
+    const ADMIN_KEY = 'Sakula2026'; // 管理密钥
 
     const urlParams = new URLSearchParams(window.location.search);
     const shareId = urlParams.get('share');
-    const isShareMode = !!shareId;
+    const inputKey = urlParams.get('key');
+    
+    // 只有当传入正确的 key 时才开启管理员权限
+    const isAdmin = inputKey === ADMIN_KEY;
+    const isShareMode = !isAdmin;
 
     let primaryColor = '#007aff';
     let bgColor = '#121212';
     
-    // 全局防抖与重绘锁标记，防止监听器互相打架
     let isRendering = false;
     let navObserver = null;
 
@@ -469,23 +473,19 @@
       }
     }
 
-    const colorPicker = document.getElementById('primary-color-picker');
-    if (colorPicker) {
-      colorPicker.addEventListener('input', (e) => {
-        updatePrimaryColor(e.target.value);
-      });
-    }
+    if (isAdmin) {
+      document.getElementById('site-header').style.display = 'flex';
+      document.getElementById('admin-panel').style.display = 'flex';
 
-    const bgColorPicker = document.getElementById('bg-color-picker');
-    if (bgColorPicker) {
-      bgColorPicker.addEventListener('input', (e) => {
-        updateBgColor(e.target.value);
-      });
-    }
+      const colorPicker = document.getElementById('primary-color-picker');
+      if (colorPicker) {
+        colorPicker.addEventListener('input', (e) => updatePrimaryColor(e.target.value));
+      }
 
-    if (isShareMode) {
-      document.getElementById('site-header').style.display = 'none';
-      document.getElementById('admin-panel').style.display = 'none';
+      const bgColorPicker = document.getElementById('bg-color-picker');
+      if (bgColorPicker) {
+        bgColorPicker.addEventListener('input', (e) => updateBgColor(e.target.value));
+      }
     }
 
     function renderCategoryUI() {
@@ -514,30 +514,32 @@
 
         navContainer.appendChild(navItem);
 
-        if (selectElem) {
-          const opt = document.createElement('option');
-          opt.value = cat.id;
-          opt.innerText = cat.name;
-          selectElem.appendChild(opt);
-        }
+        if (isAdmin) {
+          if (selectElem) {
+            const opt = document.createElement('option');
+            opt.value = cat.id;
+            opt.innerText = cat.name;
+            selectElem.appendChild(opt);
+          }
 
-        if (manageList) {
-          const item = document.createElement('div');
-          item.className = 'cat-tag-item';
-          item.innerHTML = `
-            <span>${cat.name}</span>
-            <div class="cat-tag-actions">
-              <button class="cat-btn move-up" data-idx="${idx}">▲</button>
-              <button class="cat-btn move-down" data-idx="${idx}">▼</button>
-              <button class="cat-btn rename-btn" data-id="${cat.id}">✏️</button>
-              <button class="cat-btn del del-cat-btn" data-id="${cat.id}">✕</button>
-            </div>
-          `;
-          manageList.appendChild(item);
+          if (manageList) {
+            const item = document.createElement('div');
+            item.className = 'cat-tag-item';
+            item.innerHTML = `
+              <span>${cat.name}</span>
+              <div class="cat-tag-actions">
+                <button class="cat-btn move-up" data-idx="${idx}">▲</button>
+                <button class="cat-btn move-down" data-idx="${idx}">▼</button>
+                <button class="cat-btn rename-btn" data-id="${cat.id}">✏️</button>
+                <button class="cat-btn del del-cat-btn" data-id="${cat.id}">✕</button>
+              </div>
+            `;
+            manageList.appendChild(item);
+          }
         }
       });
 
-      if (manageList) {
+      if (isAdmin && manageList) {
         manageList.querySelectorAll('.move-up').forEach(btn => {
           btn.addEventListener('click', (e) => {
             const idx = parseInt(e.target.dataset.idx);
@@ -591,134 +593,131 @@
       }
     }
 
-    const addCatBtn = document.getElementById('add-cat-btn');
-    if (addCatBtn) {
-      addCatBtn.addEventListener('click', () => {
-        const input = document.getElementById('new-cat-name');
-        const name = input.value.trim();
-        if (!name) return;
+    if (isAdmin) {
+      const addCatBtn = document.getElementById('add-cat-btn');
+      if (addCatBtn) {
+        addCatBtn.addEventListener('click', () => {
+          const input = document.getElementById('new-cat-name');
+          const name = input.value.trim();
+          if (!name) return;
 
-        const newId = 'cat-' + Date.now();
-        categories.push({ id: newId, name: name });
-        portfolioData[newId] = [];
+          const newId = 'cat-' + Date.now();
+          categories.push({ id: newId, name: name });
+          portfolioData[newId] = [];
 
-        input.value = '';
-        renderCategoryUI();
-        renderPortfolioContent();
-      });
-    }
-
-    const addUrlsBtn = document.getElementById('add-urls-btn');
-    if (addUrlsBtn) {
-      addUrlsBtn.addEventListener('click', () => {
-        const textarea = document.getElementById('url-input');
-        const selectedCatId = document.getElementById('cat-select').value;
-        const urls = textarea.value.split('\n').map(u => u.trim()).filter(u => u.length > 0);
-
-        if (urls.length === 0) {
-          alert('请先粘贴图片或视频链接！');
-          return;
-        }
-
-        if (!portfolioData[selectedCatId]) {
-          portfolioData[selectedCatId] = [];
-        }
-
-        portfolioData[selectedCatId].push(...urls);
-        textarea.value = '';
-        renderPortfolioContent();
-      });
-    }
-
-  function moveImage(catId, fromIndex, toIndex, event) {
-  const list = portfolioData[catId];
-  if (!list || toIndex < 0 || toIndex >= list.length) return;
-
-  // 1. 更新数据数组
-  const item = list.splice(fromIndex, 1)[0];
-  list.splice(toIndex, 0, item);
-
-  // 2. 找到当前分类容器
-  const sectionElem = document.getElementById(catId);
-  if (!sectionElem) return;
-
-  const gridElem = sectionElem.querySelector('.image-grid');
-  if (!gridElem) return;
-
-  const wrappers = Array.from(gridElem.children);
-  const currentWrapper = wrappers[fromIndex];
-  const targetWrapper = wrappers[toIndex];
-
-  if (!currentWrapper) return;
-
-  // 3. 原生 DOM 物理节点位置交换（不销毁任何 DOM，高度零变化）
-  if (toIndex > fromIndex) {
-    // 下移：插入到目标节点之后
-    gridElem.insertBefore(currentWrapper, targetWrapper.nextSibling);
-  } else {
-    // 上移：插入到目标节点之前
-    gridElem.insertBefore(currentWrapper, targetWrapper);
-  }
-
-  // 4. 重新纠正所有子卡片按钮上的索引参数（让下一次移动依然准确）
-  const updatedWrappers = gridElem.querySelectorAll('.image-item-wrapper');
-  updatedWrappers.forEach((wrapper, idx) => {
-    const actionsDiv = wrapper.querySelector('.img-actions');
-    if (actionsDiv) {
-      actionsDiv.innerHTML = ''; // 仅清理按钮区
-
-      if (idx > 0) {
-        const upBtn = document.createElement('button');
-        upBtn.className = 'img-action-btn';
-        upBtn.innerText = '▲ 上移';
-        upBtn.onclick = (e) => moveImage(catId, idx, idx - 1, e);
-        actionsDiv.appendChild(upBtn);
+          input.value = '';
+          renderCategoryUI();
+          renderPortfolioContent();
+        });
       }
 
-      if (idx < list.length - 1) {
-        const downBtn = document.createElement('button');
-        downBtn.className = 'img-action-btn';
-        downBtn.innerText = '▼ 下移';
-        downBtn.onclick = (e) => moveImage(catId, idx, idx + 1, e);
-        actionsDiv.appendChild(downBtn);
-      }
+      const addUrlsBtn = document.getElementById('add-urls-btn');
+      if (addUrlsBtn) {
+        addUrlsBtn.addEventListener('click', () => {
+          const textarea = document.getElementById('url-input');
+          const selectedCatId = document.getElementById('cat-select').value;
+          const urls = textarea.value.split('\n').map(u => u.trim()).filter(u => u.length > 0);
 
-      const replaceBtn = document.createElement('button');
-      replaceBtn.className = 'img-action-btn replace-btn';
-      replaceBtn.innerText = '替换';
-     replaceBtn.onclick = () => {
-        const oldUrl = list[idx];
-        const newUrl = prompt('请输入替换后的新图片/视频链接：', oldUrl);
-        if (newUrl && newUrl.trim() && newUrl.trim() !== oldUrl) {
-          const validNewUrl = newUrl.trim();
-          list[idx] = validNewUrl;
-          
-          // 手动找到当前卡片里的 img 或 video 节点并刷新 src
-          const mediaElem = wrapper.querySelector('img, video');
-          if (mediaElem) {
-            mediaElem.src = validNewUrl;
-            if (mediaElem.tagName.toLowerCase() === 'video') {
-              mediaElem.load();
-            }
+          if (urls.length === 0) {
+            alert('请先粘贴图片或视频链接！');
+            return;
           }
-        }
-      };
 
-      const delBtn = document.createElement('button');
-      delBtn.className = 'img-action-btn delete-btn';
-      delBtn.innerText = '删除';
-      delBtn.onclick = () => {
-        list.splice(idx, 1);
-        wrapper.remove();
-        // 简单更新剩余节点索引
-        moveImage(catId, 0, 0, null); 
-      };
+          if (!portfolioData[selectedCatId]) {
+            portfolioData[selectedCatId] = [];
+          }
 
-      actionsDiv.appendChild(replaceBtn);
-      actionsDiv.appendChild(delBtn);
+          portfolioData[selectedCatId].push(...urls);
+          textarea.value = '';
+          renderPortfolioContent();
+        });
+      }
     }
-  });
-}
+
+    function moveImage(catId, fromIndex, toIndex, event) {
+      if (!isAdmin) return;
+      
+      const list = portfolioData[catId];
+      if (!list || toIndex < 0 || toIndex >= list.length) return;
+
+      const item = list.splice(fromIndex, 1)[0];
+      list.splice(toIndex, 0, item);
+
+      const sectionElem = document.getElementById(catId);
+      if (!sectionElem) return;
+
+      const gridElem = sectionElem.querySelector('.image-grid');
+      if (!gridElem) return;
+
+      const wrappers = Array.from(gridElem.children);
+      const currentWrapper = wrappers[fromIndex];
+      const targetWrapper = wrappers[toIndex];
+
+      if (!currentWrapper) return;
+
+      if (toIndex > fromIndex) {
+        gridElem.insertBefore(currentWrapper, targetWrapper.nextSibling);
+      } else {
+        gridElem.insertBefore(currentWrapper, targetWrapper);
+      }
+
+      const updatedWrappers = gridElem.querySelectorAll('.image-item-wrapper');
+      updatedWrappers.forEach((wrapper, idx) => {
+        const actionsDiv = wrapper.querySelector('.img-actions');
+        if (actionsDiv) {
+          actionsDiv.innerHTML = '';
+
+          if (idx > 0) {
+            const upBtn = document.createElement('button');
+            upBtn.className = 'img-action-btn';
+            upBtn.innerText = '▲ 上移';
+            upBtn.onclick = (e) => moveImage(catId, idx, idx - 1, e);
+            actionsDiv.appendChild(upBtn);
+          }
+
+          if (idx < list.length - 1) {
+            const downBtn = document.createElement('button');
+            downBtn.className = 'img-action-btn';
+            downBtn.innerText = '▼ 下移';
+            downBtn.onclick = (e) => moveImage(catId, idx, idx + 1, e);
+            actionsDiv.appendChild(downBtn);
+          }
+
+          const replaceBtn = document.createElement('button');
+          replaceBtn.className = 'img-action-btn replace-btn';
+          replaceBtn.innerText = '替换';
+          replaceBtn.onclick = () => {
+            const oldUrl = list[idx];
+            const newUrl = prompt('请输入替换后的新图片/视频链接：', oldUrl);
+            if (newUrl && newUrl.trim() && newUrl.trim() !== oldUrl) {
+              const validNewUrl = newUrl.trim();
+              list[idx] = validNewUrl;
+              
+              const mediaElem = wrapper.querySelector('img, video');
+              if (mediaElem) {
+                mediaElem.src = validNewUrl;
+                if (mediaElem.tagName.toLowerCase() === 'video') {
+                  mediaElem.load();
+                }
+              }
+            }
+          };
+
+          const delBtn = document.createElement('button');
+          delBtn.className = 'img-action-btn delete-btn';
+          delBtn.innerText = '删除';
+          delBtn.onclick = () => {
+            list.splice(idx, 1);
+            wrapper.remove();
+            moveImage(catId, 0, 0, null); 
+          };
+
+          actionsDiv.appendChild(replaceBtn);
+          actionsDiv.appendChild(delBtn);
+        }
+      });
+    }
+
     let mediaObserver = null;
     function setupMediaLazyLoad() {
       if (mediaObserver) mediaObserver.disconnect();
@@ -748,19 +747,14 @@
 
       isRendering = true;
 
-      // 记录当前滚动位置，以及【每一个独立分类】的当前高度，防止重绘时瞬间塌陷
       const currentScrollY = window.scrollY || document.documentElement.scrollTop;
       const sectionHeights = {};
       document.querySelectorAll('.category-section').forEach(sec => {
         sectionHeights[sec.id] = sec.offsetHeight;
       });
 
-     // if (container.offsetHeight > 0) {
-  //   container.style.minHeight = container.offsetHeight + 'px';
-  // }
-
       container.innerHTML = '';
-      container.style.minHeight = ''; // 重置最小高度，确保高度完全自适应
+      container.style.minHeight = '';
       let hasMedia = false;
 
       categories.forEach(cat => {
@@ -773,7 +767,6 @@
         section.className = 'category-section';
         section.id = cat.id;
 
-        // 单独锁死每个分类的高度
         if (sectionHeights[cat.id]) {
           section.style.minHeight = sectionHeights[cat.id] + 'px';
         }
@@ -830,7 +823,7 @@
               wrapper.appendChild(img);
             }
 
-            if (!isShareMode) {
+            if (isAdmin) {
               const actionsDiv = document.createElement('div');
               actionsDiv.className = 'img-actions';
 
@@ -838,7 +831,7 @@
                 const upBtn = document.createElement('button');
                 upBtn.className = 'img-action-btn';
                 upBtn.innerText = '▲ 上移';
-               upBtn.onclick = (e) => moveImage(cat.id, idx, idx - 1, e);
+                upBtn.onclick = (e) => moveImage(cat.id, idx, idx - 1, e);
                 actionsDiv.appendChild(upBtn);
               }
 
@@ -891,7 +884,6 @@
 
       window.scrollTo(0, currentScrollY);
 
-      // 延迟释放高度锁，给懒加载图片留出足够的渲染时间
       setTimeout(() => {
         container.style.minHeight = '';
         document.querySelectorAll('.category-section').forEach(sec => {
@@ -902,7 +894,6 @@
     }
 
     function setupScrollObserver() {
-      // 每次重新绑定前，先断开旧的监听器
       if (navObserver) {
         navObserver.disconnect();
       }
@@ -969,14 +960,17 @@
               const meta = record.images_data._meta;
               if (meta.primary_color) {
                 updatePrimaryColor(meta.primary_color);
+                const colorPicker = document.getElementById('primary-color-picker');
                 if (colorPicker) colorPicker.value = meta.primary_color;
               }
               if (meta.bg_color) {
                 updateBgColor(meta.bg_color);
+                const bgColorPicker = document.getElementById('bg-color-picker');
                 if (bgColorPicker) bgColorPicker.value = meta.bg_color;
               }
             } else if (record.primary_color) {
               updatePrimaryColor(record.primary_color);
+              const colorPicker = document.getElementById('primary-color-picker');
               if (colorPicker) colorPicker.value = record.primary_color;
             }
             
@@ -995,82 +989,94 @@
       }
     }
 
-    const saveBtn = document.getElementById('save-btn');
-    if (saveBtn) {
-      saveBtn.addEventListener('click', async () => {
-        saveBtn.innerText = '正在保存中...';
-        
-        const expireDays = parseInt(document.getElementById('expire-select').value);
-        let expiresAt = null;
-        if (expireDays > 0) {
-          const expireDate = new Date();
-          expireDate.setDate(expireDate.getDate() + expireDays);
-          expiresAt = expireDate.toISOString();
-        }
-
-        const allImagesFlat = Object.values(portfolioData).filter(v => Array.isArray(v)).flat();
-
-        const saveDataObj = {
-          ...portfolioData,
-          _meta: { 
-            primary_color: primaryColor,
-            bg_color: bgColor 
-          }
-        };
-
-        const payload = {
-          categories: categories,
-          images_data: saveDataObj,
-          images: allImagesFlat,
-          expires_at: expiresAt
-        };
-
-        try {
-          const res = await fetch('/sp-api/rest/v1/portfolios', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              'apikey': SUPABASE_API_KEY,
-              'Authorization': `Bearer ${SUPABASE_API_KEY}`,
-              'Prefer': 'return=representation'
-            },
-            body: JSON.stringify(payload)
-          });
-
-          if (!res.ok) {
-            const errorText = await res.text();
-            throw new Error(`保存失败: ${errorText}`);
+    if (isAdmin) {
+      const saveBtn = document.getElementById('save-btn');
+      if (saveBtn) {
+        saveBtn.addEventListener('click', async () => {
+          if (!isAdmin) {
+            alert('鉴权失败，拒绝保存请求！');
+            return;
           }
 
-          const data = await res.json();
-          if (data && data[0] && data[0].id) {
-            const newShareId = data[0].id;
-            const fullShareUrl = `${window.location.origin}${window.location.pathname}?share=${newShareId}`;
-            
-            document.getElementById('share-info').style.display = 'flex';
-            document.getElementById('share-url').innerText = fullShareUrl;
-            
-            alert('保存成功！链接已就绪。');
+          saveBtn.innerText = '正在保存中...';
+          
+          const expireDays = parseInt(document.getElementById('expire-select').value);
+          let expiresAt = null;
+          if (expireDays > 0) {
+            const expireDate = new Date();
+            expireDate.setDate(expireDate.getDate() + expireDays);
+            expiresAt = expireDate.toISOString();
           }
-        } catch (err) {
-          console.error(err);
-          alert(`保存失败: ${err.message}`);
-        } finally {
-          saveBtn.innerText = '💾 保存作品集并生成链接';
-        }
-      });
-    }
 
-    const copyBtn = document.getElementById('copy-btn');
-    if (copyBtn) {
-      copyBtn.addEventListener('click', () => {
-        const urlText = document.getElementById('share-url').innerText;
-        navigator.clipboard.writeText(urlText).then(() => {
-          alert('链接已复制到剪贴板！');
+          const allImagesFlat = Object.values(portfolioData).filter(v => Array.isArray(v)).flat();
+
+          const saveDataObj = {
+            ...portfolioData,
+            _meta: { 
+              primary_color: primaryColor,
+              bg_color: bgColor 
+            }
+          };
+
+          const payload = {
+            categories: categories,
+            images_data: saveDataObj,
+            images: allImagesFlat,
+            expires_at: expiresAt
+          };
+
+          try {
+            const res = await fetch('/sp-api/rest/v1/portfolios', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                'apikey': SUPABASE_API_KEY,
+                'Authorization': `Bearer ${SUPABASE_API_KEY}`,
+                'Prefer': 'return=representation'
+              },
+              body: JSON.stringify(payload)
+            });
+
+            if (!res.ok) {
+              const errorText = await res.text();
+              throw new Error(`保存失败: ${errorText}`);
+            }
+
+            const data = await res.json();
+            if (data && data[0] && data[0].id) {
+              const newShareId = data[0].id;
+              const fullShareUrl = `${window.location.origin}${window.location.pathname}?share=${newShareId}`;
+              
+              document.getElementById('share-info').style.display = 'flex';
+              document.getElementById('share-url').innerText = fullShareUrl;
+              
+              alert('保存成功！链接已就绪。');
+            }
+          } catch (err) {
+            console.error(err);
+            alert(`保存出错：${err.message}`);
+          } finally {
+            saveBtn.innerText = '💾 保存作品集并生成链接';
+          }
         });
-      });
+      }
+
+      const copyBtn = document.getElementById('copy-btn');
+      if (copyBtn) {
+        copyBtn.addEventListener('click', () => {
+          const urlText = document.getElementById('share-url').innerText;
+          if (urlText) {
+            navigator.clipboard.writeText(urlText).then(() => {
+              alert('分享链接已复制到剪贴板！');
+            }).catch(err => {
+              console.error('复制失败', err);
+            });
+          }
+        });
+      }
     }
 
+    // 页面初始化
     loadPortfolioData();
   </script>
 </body>
