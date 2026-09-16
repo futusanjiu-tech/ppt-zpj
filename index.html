@@ -926,6 +926,13 @@
 
     async function loadPortfolioData() {
       try {
+        // 如果非管理员，且没有提供 shareID，直接阻止访问，不自动读取最新的记录
+        if (!isAdmin && !shareId) {
+          document.getElementById('portfolio-container').innerHTML = '<div id="loading">⚠️ 无法访问：请使用有效的分享链接查看作品集</div>';
+          document.getElementById('category-nav').style.display = 'none';
+          return;
+        }
+
         let apiUrl = '/sp-api/rest/v1/portfolios?select=*&order=created_at.desc&limit=1';
         if (shareId) {
           apiUrl = `/sp-api/rest/v1/portfolios?id=eq.${shareId}&select=*`;
@@ -940,14 +947,22 @@
 
         if (res.ok) {
           const data = await res.json();
+          
+          if (!data || data.length === 0) {
+            document.getElementById('portfolio-container').innerHTML = '<div id="loading">⚠️ 未找到该作品集或链接不存在</div>';
+            return;
+          }
+
           if (data && data[0]) {
             const record = data[0];
 
+            // 如果是普通访客，强行校验过期时间
             if (isShareMode && record.expires_at) {
               const now = Date.now();
               const expireTime = new Date(record.expires_at).getTime();
               if (now > expireTime) {
-                document.getElementById('portfolio-container').innerHTML = '<div id="loading">⚠️ 该分享链接已过期</div>';
+                document.getElementById('portfolio-container').innerHTML = '<div id="loading">⚠️ 该分享链接已到期失效</div>';
+                document.getElementById('category-nav').style.display = 'none';
                 return;
               }
             }
@@ -983,9 +998,12 @@
         }
       } catch (err) {
         console.error('加载远程数据失败', err);
+        document.getElementById('portfolio-container').innerHTML = '<div id="loading">⚠️ 加载失败，请稍后再试</div>';
       } finally {
-        renderCategoryUI();
-        renderPortfolioContent();
+        if (shareId || isAdmin) {
+          renderCategoryUI();
+          renderPortfolioContent();
+        }
       }
     }
 
