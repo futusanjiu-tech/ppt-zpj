@@ -407,18 +407,20 @@
     </div>
 
   <div class="preview-area">
-  <!-- 封面与自我介绍展示区域（传图后会显示在这里） -->
-  <div class="profile-header-container" style="padding: 20px; text-align: center;">
-    <img id="display-header-img" src="https://via.placeholder.com/1200x400?text=Upload+Header+Image" alt="个人封面与介绍" style="width: 100%; height: auto; border-radius: 12px; margin-bottom: 12px; display: block;" />
+  <!-- 封面与自我介绍展示区域（支持多图纵向排列） -->
+<div class="profile-header-container" style="padding: 20px; text-align: center;">
+  <div id="header-img-list" style="display: flex; flex-direction: column; gap: 16px;">
+    <!-- 上传的多张图片会自动纵向排列在这里 -->
   </div>
+</div>
 
-  <!-- 后台专属：上传封面/自我介绍图片的控件 -->
-  <div class="admin-only-tools" style="padding: 0 20px 16px 20px; text-align: right;">
-    <label for="header-img-input" style="font-size: 13px; color: var(--primary-color, #0071e3); cursor: pointer; background: rgba(0, 113, 227, 0.1); padding: 6px 12px; border-radius: 6px; display: inline-block;">
-      📷 上传/更换 Header 图片
-    </label>
-    <input type="file" id="header-img-input" accept="image/*" style="display: none;" />
-  </div>
+<!-- 后台专属：上传控件（已加上 multiple 支持一次多选） -->
+<div class="admin-only-tools" style="padding: 0 20px 16px 20px; text-align: right;">
+  <label for="header-img-input" style="font-size: 13px; color: var(--primary-color, #0071e3); cursor: pointer; background: rgba(0, 113, 227, 0.1); padding: 6px 12px; border-radius: 6px; display: inline-block;">
+    📷 添加/更换 Header 图片 (可多选)
+  </label>
+  <input type="file" id="header-img-input" accept="image/*" multiple style="display: none;" />
+</div>
 
   <!-- 下方吸顶 Tab 导航栏 -->
   <nav class="category-nav" id="category-nav"></nav>
@@ -428,16 +430,48 @@
 </div>
 
   <script>
-    // Header 图片上传与本地预览保存
+  // Header 多图上传与本地预览保存
 const headerInput = document.getElementById('header-img-input');
-const displayHeaderImg = document.getElementById('display-header-img');
+const headerImgList = document.getElementById('header-img-list');
 
-// 1. 页面加载时读取已存图片
+// 渲染多图列表的辅助函数
+function renderHeaderImages(imgArray) {
+  if (!headerImgList) return;
+  headerImgList.innerHTML = '';
+  imgArray.forEach((src) => {
+    const img = document.createElement('img');
+    img.src = src;
+    img.style.cssText = 'width: 100%; height: auto; border-radius: 12px; display: block;';
+    headerImgList.appendChild(img);
+  });
+}
+
+// 1. 页面加载时读取已存的多图数组
 window.addEventListener('DOMContentLoaded', () => {
-  const savedImg = localStorage.getItem('custom_header_img');
-  if (savedImg && displayHeaderImg) {
-    displayHeaderImg.src = savedImg;
+  const savedImgs = JSON.parse(localStorage.getItem('custom_header_imgs') || '[]');
+  if (savedImgs.length > 0) {
+    renderHeaderImages(savedImgs);
   }
+});
+
+// 2. 监听多图选择并更新预览
+headerInput?.addEventListener('change', async (e) => {
+  const files = Array.from(e.target.files);
+  if (files.length === 0) return;
+
+  const readPromises = files.map(file => {
+    return new Promise((resolve) => {
+      const reader = new FileReader();
+      reader.onload = (evt) => resolve(evt.target.result);
+      reader.readAsDataURL(file);
+    });
+  });
+
+  const base64Images = await Promise.all(readPromises);
+  
+  // 渲染并保存
+  renderHeaderImages(base64Images);
+  localStorage.setItem('custom_header_imgs', JSON.stringify(base64Images));
 });
 
 // 2. 监听文件选择并更新展示
