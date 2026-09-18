@@ -206,7 +206,7 @@
       display: flex;
       gap: 10px;
       padding: 12px 20px;
-      background: rgba(18, 18, 18, 0.6);
+      background: var(--bg-color);
       backdrop-filter: blur(16px);
       -webkit-backdrop-filter: blur(16px);
       border-bottom: 1px solid rgba(255, 255, 255, 0.08);
@@ -406,14 +406,18 @@
 
     </div>
 
-    <div class="preview-area">
-      <nav class="category-nav" id="category-nav"></nav>
-      <main id="portfolio-container">
-        <div id="loading">正在加载作品内容...</div>
-      </main>
-    </div>
-
+  <div class="preview-area">
+  <div class="profile-header-container" style="padding: 40px 20px 20px 20px; text-align: center;">
+    <img src="https://via.placeholder.com/1200x300" alt="封面" style="width: 100%; max-height: 200px; object-fit: cover; border-radius: 12px; margin-bottom: 20px;" />
+    <h2 style="font-size: 24px; font-weight: 700; margin-bottom: 8px;">你的名字 / 昵称</h2>
+    <p style="font-size: 14px; color: #8e8e93; max-width: 600px; margin: 0 auto;">这里写你的个人介绍，例如：资深视觉设计师 / Web 开发者，专注于 3D 视觉与品牌拓展。</p>
   </div>
+
+  <nav class="category-nav" id="category-nav"></nav>
+  <main id="portfolio-container">
+    <div id="loading">正在加载作品内容...</div>
+  </main>
+</div>
 
   <script>
     const SUPABASE_API_KEY = 'sb_publishable_WlJg39rJcx_L7lO8wDG-zw_qTE4fF5o';
