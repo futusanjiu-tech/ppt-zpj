@@ -354,10 +354,20 @@
       color: #8e8e93;
     }
 
-   @media (max-width: 768px) {
+  @media (max-width: 768px) {
       .app-layout { flex-direction: column; }
       .admin-panel { width: 100%; max-height: none; position: static; }
-      main { padding: 12px 0; } /* 将左右内边距改为 0，即可手机端完全满屏 */
+      main { padding: 12px 0; }
+
+      /* 👇 手机端作品列表图间距（默认电脑端是 16px，手机端改为 6px，可按需微调） */
+      .image-grid {
+        gap: 6px !important;
+      }
+
+      /* 👇 手机端顶部多张封面图之间的间距（改为 6px） */
+      #header-img-list {
+        gap: 6px !important;
+      }
     }
   </style>
 </head>
