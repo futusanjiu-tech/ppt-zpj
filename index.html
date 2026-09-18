@@ -242,19 +242,20 @@
       border-color: rgba(255, 255, 255, 0.2) !important;
     }
 
-    /* 选中高亮状态 */
+  /* 选中高亮状态 */
     .category-nav button.active,
     .category-nav .nav-item.active,
     .category-nav .tab-btn.active,
     .category-nav button[class*="active"] {
       color: #ffffff !important;
-      background: #ff9f0a !important;
-      border-color: #ff9f0a !important;
+      background: var(--primary-color) !important; /* 背景使用主题色 */
+      border-color: var(--primary-color) !important; /* 边框使用主题色 */
       font-weight: 600 !important;
-      box-shadow: 0 4px 14px rgba(255, 159, 10, 0.35) !important;
+      /* 选填：如果不需要阴影发光，可以删除下面这一行 */
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2) !important; 
     }
 
-    main { padding: 24px 20px; }
+   main { padding: 24px 0; }
     .category-section {
       scroll-margin-top: 60px;
       margin-bottom: 36px;
@@ -264,6 +265,7 @@
       font-size: 17px;
       font-weight: 600;
       margin-bottom: 16px;
+      padding: 0 20px; /* 确保标题文字不会紧贴屏幕边缘 */
       display: flex;
       align-items: center;
       gap: 10px;
@@ -289,13 +291,13 @@
       position: relative;
       user-select: none;
       background-color: transparent;
-      border-radius: 8px;
+      border-radius: 0; /* 改为0，取消外层圆角 */
       overflow: hidden;
     }
     .image-grid img, .image-grid video {
       width: 100%;
       height: auto;
-      border-radius: 8px;
+      border-radius: 0; /* 改为0，取消图片/视频圆角 */
       display: block;
       background-color: transparent;
       object-fit: cover;
