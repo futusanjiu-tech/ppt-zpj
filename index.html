@@ -431,8 +431,8 @@
     </div>
 
     <div class="preview-area">
-      <!-- 封面与自我介绍展示区域（支持多图纵向排列） -->
-      <div class="profile-header-container" style="padding: 20px; text-align: center;">
+     <!-- 封面与自我介绍展示区域（支持多图纵向排列） -->
+      <div class="profile-header-container" style="padding: 20px 0; text-align: center;">
         <div id="header-img-list" style="display: flex; flex-direction: column; gap: 16px;">
           <!-- 上传的多张图片会自动纵向排列在这里 -->
         </div>
@@ -470,7 +470,7 @@
         if (!src) return;
         const img = document.createElement('img');
         img.src = src;
-        img.style.cssText = 'width: 100%; height: auto; border-radius: 12px; display: block;';
+       img.style.cssText = 'width: 100%; height: auto; border-radius: 0; display: block;';
         headerImgList.appendChild(img);
       });
     }
