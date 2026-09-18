@@ -468,12 +468,27 @@
   </div>
 </div>
 
-<!-- 后台专属：上传控件（已加上 multiple 支持一次多选） -->
-<div class="admin-only-tools" style="padding: 0 20px 16px 20px; text-align: right;">
-  <label for="header-img-input" style="font-size: 13px; color: var(--primary-color, #0071e3); cursor: pointer; background: rgba(0, 113, 227, 0.1); padding: 6px 12px; border-radius: 6px; display: inline-block;">
-    📷 添加/更换 Header 图片 (可多选)
-  </label>
-  <input type="file" id="header-img-input" accept="image/*" multiple style="display: none;" />
+<!-- 后台专属：上传与分类控件 -->
+<div class="admin-only-tools" style="padding: 16px 20px; background: rgba(255,255,255,0.03); border-radius: 8px; margin-bottom: 20px;">
+  <div style="display: flex; align-items: center; gap: 12px; justify-content: flex-end;">
+    <!-- 分类选择下拉框 -->
+    <label style="font-size: 13px; color: #8e8e93;">归属分类：</label>
+    <select id="header-tag-select" style="padding: 6px 12px; background: #222; color: #fff; border: 1px solid rgba(255,255,255,0.15); border-radius: 6px; font-size: 13px; outline: none;">
+      <option value="all">全部分类</option>
+      <option value="营销活动">营销活动</option>
+      <option value="视频">视频</option>
+      <option value="长图H5">长图H5</option>
+      <option value="海报">海报</option>
+      <option value="互动游戏">互动游戏</option>
+      <option value="IP/插画">IP/插画</option>
+    </select>
+
+    <!-- 上传按钮 -->
+    <label for="header-img-input" style="font-size: 13px; color: #fff; cursor: pointer; background: var(--primary-color, #0071e3); padding: 6px 14px; border-radius: 6px;">
+      📷 上传/添加图片
+    </label>
+    <input type="file" id="header-img-input" accept="image/*" multiple style="display: none;" />
+  </div>
 </div>
 
   <!-- 下方吸顶 Tab 导航栏 -->
