@@ -354,10 +354,10 @@
       color: #8e8e93;
     }
 
-    @media (max-width: 768px) {
+   @media (max-width: 768px) {
       .app-layout { flex-direction: column; }
       .admin-panel { width: 100%; max-height: none; position: static; }
-      main { padding: 12px; }
+      main { padding: 12px 0; } /* 将左右内边距改为 0，即可手机端完全满屏 */
     }
   </style>
 </head>
