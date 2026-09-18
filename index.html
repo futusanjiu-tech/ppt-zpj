@@ -851,7 +851,7 @@
       document.querySelectorAll('.lazy-media').forEach(el => mediaObserver.observe(el));
     }
 
-    function renderPortfolioContent() {
+function renderPortfolioContent() {
       const container = document.getElementById('portfolio-container');
       if (!container) return;
 
@@ -897,6 +897,17 @@
           grid.appendChild(emptyHint);
         } else {
           mediaList.forEach((url, idx) => {
+            // 🛑 防护校验：确保 url 是有效字符串，防止 split 报错崩溃
+            if (!url || typeof url !== 'string') {
+              if (typeof url === 'object' && url !== null && url.url) {
+                url = url.url;
+              } else {
+                url = String(url || '');
+              }
+            }
+
+            if (!url.trim()) return; // 过滤空路径
+
             const wrapper = document.createElement('div');
             wrapper.className = 'image-item-wrapper';
 
