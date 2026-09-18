@@ -1073,17 +1073,23 @@ function renderPortfolioContent() {
 
     async function loadPortfolioData() {
       try {
-       if (!isAdmin && !shareId) {
-        document.getElementById('portfolio-container').innerHTML = '<div id="loading">⚠️ 无法访问：请使用有效的分享链接查看作品集</div>';
-        document.getElementById('category-nav').style.display = 'none';
-        return;
-      }
+        if (!isAdmin && !shareId) {
+          document.getElementById('portfolio-container').innerHTML = '<div id="loading">⚠️ 无法访问：请使用有效的分享链接查看作品集</div>';
+          document.getElementById('category-nav').style.display = 'none';
+          return;
+        }
 
-      // 如果不是管理员，隐藏上传和分类选择工具栏
-      if (!isAdmin) {
-        const adminTools = document.querySelector('.admin-only-tools');
-        if (adminTools) adminTools.style.display = 'none';
-      }
+        // 🛡️ 防护 1：非管理员访问时，强制隐藏上传和归属分类工具栏
+        if (!isAdmin) {
+          const adminTools = document.querySelector('.admin-only-tools');
+          if (adminTools) adminTools.style.display = 'none';
+        }
+
+        // 🛑 补回缺失的 apiUrl 变量定义（解决 ReferenceError）
+        let apiUrl = '/sp-api/rest/v1/portfolios?select=*&order=created_at.desc&limit=1';
+        if (shareId) {
+          apiUrl = `/sp-api/rest/v1/portfolios?id=eq.${shareId}&select=*`;
+        }
 
         const res = await fetch(apiUrl, {
           headers: {
@@ -1092,69 +1098,40 @@ function renderPortfolioContent() {
           }
         });
 
-        if (res.ok) {
-          const data = await res.json();
-          
-          if (!data || data.length === 0) {
-            document.getElementById('portfolio-container').innerHTML = '<div id="loading">⚠️ 未找到该作品集或链接不存在</div>';
-            return;
-          }
+        if (!res.ok) throw new Error('网络请求错误');
 
-          if (data && data[0]) {
-            const record = data[0];
+        const data = await res.json();
 
-            if (isShareMode && record.expires_at) {
-              const now = Date.now();
-              const expireTime = new Date(record.expires_at).getTime();
-              if (now > expireTime) {
-                document.getElementById('portfolio-container').innerHTML = '<div id="loading">⚠️ 该分享链接已到期失效</div>';
-                document.getElementById('category-nav').style.display = 'none';
-                return;
-              }
+        if (data && data.length > 0) {
+          let record = data[0];
+          if (record.images_data && typeof record.images_data === 'object') {
+            portfolioData = record.images_data;
+
+            const meta = record.images_data._meta || {};
+
+            // 🛡️ 防护 2：自动恢复分类标签，防止标签丢失
+            if (meta.categories && Array.isArray(meta.categories) && meta.categories.length > 0) {
+              categories = meta.categories;
             }
 
-            if (record.categories && Array.isArray(record.categories) && record.categories.length > 0) {
-              categories = record.categories;
+            // 🛡️ 防护 3：自动读取并渲染封面图
+            if (meta.header_imgs && Array.isArray(meta.header_imgs) && typeof renderHeaderImages === 'function') {
+              renderHeaderImages(meta.header_imgs);
             }
-
-            if (record.images_data && record.images_data._meta) {
-              const meta = record.images_data._meta;
-              if (meta.primary_color) {
-                updatePrimaryColor(meta.primary_color);
-                const colorPicker = document.getElementById('primary-color-picker');
-                if (colorPicker) colorPicker.value = meta.primary_color;
-              }
-              if (meta.bg_color) {
-                updateBgColor(meta.bg_color);
-                const bgColorPicker = document.getElementById('bg-color-picker');
-                if (bgColorPicker) bgColorPicker.value = meta.bg_color;
-              }
-            } else if (record.primary_color) {
-              updatePrimaryColor(record.primary_color);
-              const colorPicker = document.getElementById('primary-color-picker');
-              if (colorPicker) colorPicker.value = record.primary_color;
-            }
-            
-            if (record.images_data && typeof record.images_data === 'object') {
-        portfolioData = record.images_data;
-
-        // 自动读取并渲染封面图
-        const meta = record.images_data._meta || {};
-        if (meta.header_imgs && Array.isArray(meta.header_imgs) && typeof renderHeaderImages === 'function') {
-          renderHeaderImages(meta.header_imgs);
-        }
-      } else if (record.images && Array.isArray(record.images)) {
-        portfolioData['cat-3d'] = record.images;
-      }
+          } else if (record.images && Array.isArray(record.images)) {
+            portfolioData['cat-3d'] = record.images;
           }
         }
+
+        // 重新渲染分类 Tab 与作品内容
+        renderCategoryUI();
+        renderPortfolioContent();
+
       } catch (err) {
         console.error('加载远程数据失败', err);
-        document.getElementById('portfolio-container').innerHTML = '<div id="loading">⚠️ 加载失败，请稍后再试</div>';
-      } finally {
-        if (shareId || isAdmin) {
-          renderCategoryUI();
-          renderPortfolioContent();
+        const container = document.getElementById('portfolio-container');
+        if (container) {
+          container.innerHTML = `<div id="loading" style="color: #ff3b30;">❌ 加载失败: ${err.message}</div>`;
         }
       }
     }
