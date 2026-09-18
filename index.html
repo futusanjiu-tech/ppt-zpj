@@ -200,21 +200,21 @@
     }
 
     /* Tab 导航外层容器 */
-    .category-nav {
-      position: sticky !important;
-      top: 0 !important;
-      z-index: 100 !important;
-      display: flex !important;
-      align-items: center !important;
-      gap: 10px !important;
-      padding: 16px 20px !important;
-      background: rgba(18, 18, 18, 0.9) !important;
-      backdrop-filter: blur(20px) !important;
-      -webkit-backdrop-filter: blur(20px) !important;
-      border-bottom: 1px solid rgba(255, 255, 255, 0.08) !important;
-      overflow-x: auto !important;
-      scrollbar-width: none !important;
-    }
+   .category-nav {
+  position: sticky !important;
+  top: 0 !important;
+  z-index: 100 !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 10px !important;
+  padding: 16px 20px !important;
+  background: var(--bg-color, #121212) !important;
+  backdrop-filter: blur(20px) !important;
+  -webkit-backdrop-filter: blur(20px) !important;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08) !important;
+  overflow-x: auto !important;
+  scrollbar-width: none !important;
+}
     .category-nav::-webkit-scrollbar { display: none !important; }
 
     /* 默认按钮胶囊样式 */
@@ -1073,16 +1073,17 @@ function renderPortfolioContent() {
 
     async function loadPortfolioData() {
       try {
-        if (!isAdmin && !shareId) {
-          document.getElementById('portfolio-container').innerHTML = '<div id="loading">⚠️ 无法访问：请使用有效的分享链接查看作品集</div>';
-          document.getElementById('category-nav').style.display = 'none';
-          return;
-        }
+       if (!isAdmin && !shareId) {
+        document.getElementById('portfolio-container').innerHTML = '<div id="loading">⚠️ 无法访问：请使用有效的分享链接查看作品集</div>';
+        document.getElementById('category-nav').style.display = 'none';
+        return;
+      }
 
-        let apiUrl = '/sp-api/rest/v1/portfolios?select=*&order=created_at.desc&limit=1';
-        if (shareId) {
-          apiUrl = `/sp-api/rest/v1/portfolios?id=eq.${shareId}&select=*`;
-        }
+      // 如果不是管理员，隐藏上传和分类选择工具栏
+      if (!isAdmin) {
+        const adminTools = document.querySelector('.admin-only-tools');
+        if (adminTools) adminTools.style.display = 'none';
+      }
 
         const res = await fetch(apiUrl, {
           headers: {
@@ -1135,10 +1136,16 @@ function renderPortfolioContent() {
             }
             
             if (record.images_data && typeof record.images_data === 'object') {
-              portfolioData = record.images_data;
-            } else if (record.images && Array.isArray(record.images)) {
-              portfolioData['cat-3d'] = record.images;
-            }
+        portfolioData = record.images_data;
+
+        // 自动读取并渲染封面图
+        const meta = record.images_data._meta || {};
+        if (meta.header_imgs && Array.isArray(meta.header_imgs) && typeof renderHeaderImages === 'function') {
+          renderHeaderImages(meta.header_imgs);
+        }
+      } else if (record.images && Array.isArray(record.images)) {
+        portfolioData['cat-3d'] = record.images;
+      }
           }
         }
       } catch (err) {
