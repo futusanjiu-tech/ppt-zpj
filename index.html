@@ -807,29 +807,25 @@ headerInput?.addEventListener('change', (e) => {
         if (actionsDiv) {
           actionsDiv.innerHTML = '';
 
-          if (idx > 0) {
-            const upBtn = document.createElement('button');
-            upBtn.className = 'img-action-btn';
-            upBtn.innerText = '▲ 上移';
-            upBtn.onclick = (e) => moveImage(catId, idx, idx - 1, e);
-            actionsDiv.appendChild(upBtn);
-          }
-
-          if (idx < list.length - 1) {
-            const downBtn = document.createElement('button');
-            downBtn.className = 'img-action-btn';
-            downBtn.innerText = '▼ 下移';
-            downBtn.onclick = (e) => moveImage(catId, idx, idx + 1, e);
-            actionsDiv.appendChild(downBtn);
-          }
-// 下移按钮
-    if (idx < list.length - 1) {
-        const downBtn = document.createElement('button');
-        downBtn.className = 'img-action-btn';
-        downBtn.innerText = '▼ 下移';
-        downBtn.onclick = (e) => moveImage(catId, idx, idx + 1, e);
-        actionsDiv.appendChild(downBtn);
+        // 1. 上移按钮
+    if (idx > 0) {
+      const upBtn = document.createElement('button');
+      upBtn.className = 'img-action-btn';
+      upBtn.innerText = '▲ 上移';
+      upBtn.onclick = (e) => moveImage(catId, idx, idx - 1, e);
+      actionsDiv.appendChild(upBtn);
     }
+
+    // 2. 下移按钮
+    if (idx < list.length - 1) {
+      const downBtn = document.createElement('button');
+      downBtn.className = 'img-action-btn';
+      downBtn.innerText = '▼ 下移';
+      downBtn.onclick = (e) => moveImage(catId, idx, idx + 1, e);
+      actionsDiv.appendChild(downBtn);
+    }
+
+    // 3. 分类切换下拉框
     const catSelect = document.createElement('select');
     catSelect.className = 'img-action-btn';
     catSelect.style.cssText = 'background: #444; color: #fff; border: 1px solid #666; border-radius: 4px; padding: 2px 6px; font-size: 12px; cursor: pointer; outline: none; margin: 0 2px;';
@@ -839,60 +835,47 @@ headerInput?.addEventListener('change', (e) => {
       const opt = document.createElement('option');
       opt.value = catName;
       opt.innerText = catName;
-      if (catId === catName || imgObj?.category === catName) {
-        opt.selected = true;
-      }
+      const currentCat = (typeof catId !== 'undefined' && catId) ? catId : (imgObj && imgObj.category);
+      if (currentCat === catName) opt.selected = true;
       catSelect.appendChild(opt);
     });
 
     catSelect.onchange = (e) => {
+      e.stopPropagation();
       const newCat = e.target.value;
-      if (typeof changeImageCategory === 'function') {
-        changeImageCategory(catId, idx, newCat, e);
+      if (typeof changeCategory === 'function') {
+        changeCategory(catId, idx, newCat);
       } else if (typeof list !== 'undefined' && list[idx]) {
-        list[idx].category = newCat;
-        if (typeof renderHeaderImages === 'function') renderHeaderImages();
-        if (typeof renderCategoryContent === 'function') renderCategoryContent();
+        if (typeof list[idx] === 'string') {
+          list[idx] = { url: list[idx], category: newCat };
+        } else {
+          list[idx].category = newCat;
+        }
+        location.reload();
       }
     };
     actionsDiv.appendChild(catSelect);
-    // =========================================================
 
-    // 替换按钮（原本第 826 行的代码继续保留在下方）
+    // 4. 替换按钮
     const replaceBtn = document.createElement('button');
     replaceBtn.className = 'img-action-btn replace-btn';
     replaceBtn.innerText = '替换';
-          const replaceBtn = document.createElement('button');
-          replaceBtn.className = 'img-action-btn replace-btn';
-          replaceBtn.innerText = '替换';
-          replaceBtn.onclick = () => {
-            const oldUrl = list[idx];
-            const newUrl = prompt('请输入替换后的新图片/视频链接：', oldUrl);
-            if (newUrl && newUrl.trim() && newUrl.trim() !== oldUrl) {
-              const validNewUrl = newUrl.trim();
-              list[idx] = validNewUrl;
-              
-              const mediaElem = wrapper.querySelector('img, video');
-              if (mediaElem) {
-                mediaElem.src = validNewUrl;
-                if (mediaElem.tagName.toLowerCase() === 'video') {
-                  mediaElem.load();
-                }
-              }
-            }
-          };
+    replaceBtn.onclick = (e) => {
+      if (typeof replaceImage === 'function') replaceImage(catId, idx, e);
+    };
+    actionsDiv.appendChild(replaceBtn);
 
-          const delBtn = document.createElement('button');
-          delBtn.className = 'img-action-btn delete-btn';
-          delBtn.innerText = '删除';
-          delBtn.onclick = () => {
-            list.splice(idx, 1);
-            wrapper.remove();
-            moveImage(catId, 0, 0, null); 
-          };
-
-          actionsDiv.appendChild(replaceBtn);
-          actionsDiv.appendChild(delBtn);
+    // 5. 删除按钮
+    const delBtn = document.createElement('button');
+    delBtn.className = 'img-action-btn delete-btn';
+    delBtn.innerText = '删除';
+    delBtn.onclick = (e) => {
+      list.splice(idx, 1);
+      wrapper.remove();
+      if (typeof moveImage === 'function') moveImage(catId, 0, 0, null);
+    };
+    actionsDiv.appendChild(replaceBtn);
+    actionsDiv.appendChild(delBtn);
         }
       });
     }
