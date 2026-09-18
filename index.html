@@ -200,21 +200,21 @@
     }
 
     /* Tab 导航外层容器 */
-   .category-nav {
-  position: sticky !important;
-  top: 0 !important;
-  z-index: 100 !important;
-  display: flex !important;
-  align-items: center !important;
-  gap: 10px !important;
-  padding: 16px 20px !important;
-  background: var(--bg-color, #121212) !important;
-  backdrop-filter: blur(20px) !important;
-  -webkit-backdrop-filter: blur(20px) !important;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.08) !important;
-  overflow-x: auto !important;
-  scrollbar-width: none !important;
-}
+    .category-nav {
+      position: sticky !important;
+      top: 0 !important;
+      z-index: 100 !important;
+      display: flex !important;
+      align-items: center !important;
+      gap: 10px !important;
+      padding: 16px 20px !important;
+      background: var(--bg-color, #121212) !important;
+      backdrop-filter: blur(20px) !important;
+      -webkit-backdrop-filter: blur(20px) !important;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08) !important;
+      overflow-x: auto !important;
+      scrollbar-width: none !important;
+    }
     .category-nav::-webkit-scrollbar { display: none !important; }
 
     /* 默认按钮胶囊样式 */
@@ -433,21 +433,9 @@
       <!-- 后台专属：上传与分类控件 -->
       <div class="admin-only-tools" style="padding: 16px 20px; background: rgba(255,255,255,0.03); border-radius: 8px; margin-bottom: 20px;">
         <div style="display: flex; align-items: center; gap: 12px; justify-content: flex-end;">
-          <!-- 分类选择下拉框 -->
-          <label style="font-size: 13px; color: #8e8e93;">归属分类：</label>
-          <select id="header-tag-select" style="padding: 6px 12px; background: #222; color: #fff; border: 1px solid rgba(255,255,255,0.15); border-radius: 6px; font-size: 13px; outline: none;">
-            <option value="all">全部分类</option>
-            <option value="营销活动">营销活动</option>
-            <option value="视频">视频</option>
-            <option value="长图H5">长图H5</option>
-            <option value="海报">海报</option>
-            <option value="互动游戏">互动游戏</option>
-            <option value="IP/插画">IP/插画</option>
-          </select>
-
           <!-- 上传按钮 -->
           <label for="header-img-input" style="font-size: 13px; color: #fff; cursor: pointer; background: var(--primary-color, #0071e3); padding: 6px 14px; border-radius: 6px;">
-            📷 上传/添加图片
+            📷 上传/添加封面图片
           </label>
           <input type="file" id="header-img-input" accept="image/*" multiple style="display: none;" />
         </div>
@@ -462,15 +450,16 @@
   </div>
 
   <script>
-    // Header 多图上传与本地预览保存
     const headerInput = document.getElementById('header-img-input');
     const headerImgList = document.getElementById('header-img-list');
 
-    // 渲染多图列表的辅助函数
+    // 渲染封面多图列表的辅助函数
     function renderHeaderImages(imgArray) {
       if (!headerImgList) return;
       headerImgList.innerHTML = '';
+      if (!Array.isArray(imgArray)) return;
       imgArray.forEach((src) => {
+        if (!src) return;
         const img = document.createElement('img');
         img.src = src;
         img.style.cssText = 'width: 100%; height: auto; border-radius: 12px; display: block;';
@@ -478,7 +467,7 @@
       });
     }
 
-    // 1. 页面加载时读取已存的多图数组
+    // 1. 页面加载时优先读取本地预览封面
     window.addEventListener('DOMContentLoaded', () => {
       const savedImgs = JSON.parse(localStorage.getItem('custom_header_imgs') || '[]');
       if (savedImgs.length > 0) {
@@ -486,7 +475,7 @@
       }
     });
 
-    // 2. 监听多图选择并更新预览
+    // 2. 监听封面多图选择
     headerInput?.addEventListener('change', async (e) => {
       const files = Array.from(e.target.files);
       if (files.length === 0) return;
@@ -500,20 +489,17 @@
       });
 
       const base64Images = await Promise.all(readPromises);
-      
-      // 渲染并保存
       renderHeaderImages(base64Images);
       localStorage.setItem('custom_header_imgs', JSON.stringify(base64Images));
     });
 
     const SUPABASE_API_KEY = 'sb_publishable_WlJg39rJcx_L7lO8wDG-zw_qTE4fF5o';
-    const ADMIN_KEY = 'Sakula2026'; // 管理密钥
+    const ADMIN_KEY = 'Sakula2026';
 
     const urlParams = new URLSearchParams(window.location.search);
     const shareId = urlParams.get('share');
     const inputKey = urlParams.get('key');
     
-    // 只有当传入正确的 key 时才开启管理员权限
     const isAdmin = inputKey === ADMIN_KEY;
     const isShareMode = !isAdmin;
 
@@ -733,99 +719,7 @@
       const item = list.splice(fromIndex, 1)[0];
       list.splice(toIndex, 0, item);
 
-      const sectionElem = document.getElementById(catId);
-      if (!sectionElem) return;
-
-      const gridElem = sectionElem.querySelector('.image-grid');
-      if (!gridElem) return;
-
-      const wrappers = Array.from(gridElem.children);
-      const currentWrapper = wrappers[fromIndex];
-      const targetWrapper = wrappers[toIndex];
-
-      if (!currentWrapper) return;
-
-      if (toIndex > fromIndex) {
-        gridElem.insertBefore(currentWrapper, targetWrapper.nextSibling);
-      } else {
-        gridElem.insertBefore(currentWrapper, targetWrapper);
-      }
-
-      const updatedWrappers = gridElem.querySelectorAll('.image-item-wrapper');
-      updatedWrappers.forEach((wrapper, idx) => {
-        const actionsDiv = wrapper.querySelector('.img-actions');
-        if (actionsDiv) {
-          actionsDiv.innerHTML = '';
-
-          // 1. 上移按钮
-          if (idx > 0) {
-            const upBtn = document.createElement('button');
-            upBtn.className = 'img-action-btn';
-            upBtn.innerText = '▲ 上移';
-            upBtn.onclick = (e) => moveImage(catId, idx, idx - 1, e);
-            actionsDiv.appendChild(upBtn);
-          }
-
-          // 2. 下移按钮
-          if (idx < list.length - 1) {
-            const downBtn = document.createElement('button');
-            downBtn.className = 'img-action-btn';
-            downBtn.innerText = '▼ 下移';
-            downBtn.onclick = (e) => moveImage(catId, idx, idx + 1, e);
-            actionsDiv.appendChild(downBtn);
-          }
-
-          // 3. 分类切换下拉框
-          const catSelect = document.createElement('select');
-          catSelect.className = 'img-action-btn';
-          catSelect.style.cssText = 'background: #444; color: #fff; border: 1px solid #666; border-radius: 4px; padding: 2px 6px; font-size: 12px; cursor: pointer; outline: none; margin: 0 2px;';
-
-          categories.forEach(c => {
-            const opt = document.createElement('option');
-            opt.value = c.id;
-            opt.innerText = c.name;
-            if (c.id === catId) opt.selected = true;
-            catSelect.appendChild(opt);
-          });
-
-          catSelect.onchange = (e) => {
-            e.stopPropagation();
-            const targetCatId = e.target.value;
-            if (targetCatId === catId) return;
-
-            const [targetItem] = portfolioData[catId].splice(idx, 1);
-            if (!portfolioData[targetCatId]) portfolioData[targetCatId] = [];
-            portfolioData[targetCatId].push(targetItem);
-            renderPortfolioContent();
-          };
-
-          actionsDiv.appendChild(catSelect);
-
-          // 4. 替换按钮
-          const replaceBtn = document.createElement('button');
-          replaceBtn.className = 'img-action-btn replace-btn';
-          replaceBtn.innerText = '替换';
-          replaceBtn.onclick = () => {
-            const currentUrl = portfolioData[catId][idx];
-            const newUrl = prompt('请输入替换后的新图片/视频链接：', currentUrl);
-            if (newUrl && newUrl.trim() && newUrl.trim() !== currentUrl) {
-              portfolioData[catId][idx] = newUrl.trim();
-              renderPortfolioContent();
-            }
-          };
-          actionsDiv.appendChild(replaceBtn);
-
-          // 5. 删除按钮
-          const delBtn = document.createElement('button');
-          delBtn.className = 'img-action-btn delete-btn';
-          delBtn.innerText = '删除';
-          delBtn.onclick = () => {
-            portfolioData[catId].splice(idx, 1);
-            renderPortfolioContent();
-          };
-          actionsDiv.appendChild(delBtn);
-        }
-      });
+      renderPortfolioContent();
     }
 
     let mediaObserver = null;
@@ -851,20 +745,15 @@
       document.querySelectorAll('.lazy-media').forEach(el => mediaObserver.observe(el));
     }
 
-function renderPortfolioContent() {
+    function renderPortfolioContent() {
       const container = document.getElementById('portfolio-container');
       if (!container) return;
 
       isRendering = true;
 
       const currentScrollY = window.scrollY || document.documentElement.scrollTop;
-      const sectionHeights = {};
-      document.querySelectorAll('.category-section').forEach(sec => {
-        sectionHeights[sec.id] = sec.offsetHeight;
-      });
 
       container.innerHTML = '';
-      container.style.minHeight = '';
       let hasMedia = false;
 
       categories.forEach(cat => {
@@ -876,10 +765,6 @@ function renderPortfolioContent() {
         const section = document.createElement('section');
         section.className = 'category-section';
         section.id = cat.id;
-
-        if (sectionHeights[cat.id]) {
-          section.style.minHeight = sectionHeights[cat.id] + 'px';
-        }
 
         const title = document.createElement('div');
         title.className = 'category-title';
@@ -897,7 +782,6 @@ function renderPortfolioContent() {
           grid.appendChild(emptyHint);
         } else {
           mediaList.forEach((url, idx) => {
-            // 🛑 防护校验：确保 url 是有效字符串，防止 split 报错崩溃
             if (!url || typeof url !== 'string') {
               if (typeof url === 'object' && url !== null && url.url) {
                 url = url.url;
@@ -906,7 +790,7 @@ function renderPortfolioContent() {
               }
             }
 
-            if (!url.trim()) return; // 过滤空路径
+            if (!url.trim()) return;
 
             const wrapper = document.createElement('div');
             wrapper.className = 'image-item-wrapper';
@@ -964,7 +848,6 @@ function renderPortfolioContent() {
                 actionsDiv.appendChild(downBtn);
               }
 
-              // 分类切换下拉框
               const catSelect = document.createElement('select');
               catSelect.className = 'img-action-btn';
               catSelect.style.cssText = 'background: #444; color: #fff; border: 1px solid #666; border-radius: 4px; padding: 2px 6px; font-size: 12px; cursor: pointer; outline: none; margin: 0 2px;';
@@ -1030,20 +913,11 @@ function renderPortfolioContent() {
       }
 
       window.scrollTo(0, currentScrollY);
-
-      setTimeout(() => {
-        container.style.minHeight = '';
-        document.querySelectorAll('.category-section').forEach(sec => {
-          sec.style.minHeight = '';
-        });
-        isRendering = false;
-      }, 350);
+      setTimeout(() => { isRendering = false; }, 350);
     }
 
     function setupScrollObserver() {
-      if (navObserver) {
-        navObserver.disconnect();
-      }
+      if (navObserver) navObserver.disconnect();
 
       const observerOptions = {
         root: null,
@@ -1079,13 +953,13 @@ function renderPortfolioContent() {
           return;
         }
 
-        // 🛡️ 防护 1：非管理员访问时，强制隐藏上传和归属分类工具栏
+        // 非管理员隐藏操作面板
         if (!isAdmin) {
           const adminTools = document.querySelector('.admin-only-tools');
           if (adminTools) adminTools.style.display = 'none';
         }
 
-        // 🛑 补回缺失的 apiUrl 变量定义（解决 ReferenceError）
+        // 拼接正确的 Supabase API URL
         let apiUrl = '/sp-api/rest/v1/portfolios?select=*&order=created_at.desc&limit=1';
         if (shareId) {
           apiUrl = `/sp-api/rest/v1/portfolios?id=eq.${shareId}&select=*`;
@@ -1104,18 +978,31 @@ function renderPortfolioContent() {
 
         if (data && data.length > 0) {
           let record = data[0];
+          
+          // 1. 恢复分类标签数据
+          if (record.categories && Array.isArray(record.categories) && record.categories.length > 0) {
+            categories = record.categories;
+          }
+
+          // 2. 恢复作品媒体数据
           if (record.images_data && typeof record.images_data === 'object') {
             portfolioData = record.images_data;
-
             const meta = record.images_data._meta || {};
 
-            // 🛡️ 防护 2：自动恢复分类标签，防止标签丢失
-            if (meta.categories && Array.isArray(meta.categories) && meta.categories.length > 0) {
-              categories = meta.categories;
+            // 应用主题色彩设置
+            if (meta.primary_color) {
+              updatePrimaryColor(meta.primary_color);
+              const colorPicker = document.getElementById('primary-color-picker');
+              if (colorPicker) colorPicker.value = meta.primary_color;
+            }
+            if (meta.bg_color) {
+              updateBgColor(meta.bg_color);
+              const bgColorPicker = document.getElementById('bg-color-picker');
+              if (bgColorPicker) bgColorPicker.value = meta.bg_color;
             }
 
-            // 🛡️ 防护 3：自动读取并渲染封面图
-            if (meta.header_imgs && Array.isArray(meta.header_imgs) && typeof renderHeaderImages === 'function') {
+            // 读取远程数据库的封面图
+            if (meta.header_imgs && Array.isArray(meta.header_imgs)) {
               renderHeaderImages(meta.header_imgs);
             }
           } else if (record.images && Array.isArray(record.images)) {
@@ -1123,7 +1010,6 @@ function renderPortfolioContent() {
           }
         }
 
-        // 重新渲染分类 Tab 与作品内容
         renderCategoryUI();
         renderPortfolioContent();
 
@@ -1157,11 +1043,15 @@ function renderPortfolioContent() {
 
           const allImagesFlat = Object.values(portfolioData).filter(v => Array.isArray(v)).flat();
 
+          // 打包当前 LocalStorage 中的封面图片列表
+          const localHeaderImgs = JSON.parse(localStorage.getItem('custom_header_imgs') || '[]');
+
           const saveDataObj = {
             ...portfolioData,
             _meta: { 
               primary_color: primaryColor,
-              bg_color: bgColor 
+              bg_color: bgColor,
+              header_imgs: localHeaderImgs
             }
           };
 
@@ -1223,7 +1113,7 @@ function renderPortfolioContent() {
       }
     }
 
-    // 页面初始化
+    // 执行数据载入初始化
     loadPortfolioData();
   </script>
 </body>
