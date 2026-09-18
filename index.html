@@ -830,8 +830,23 @@ headerInput?.addEventListener('change', (e) => {
     catSelect.className = 'img-action-btn';
     catSelect.style.cssText = 'background: #444; color: #fff; border: 1px solid #666; border-radius: 4px; padding: 2px 6px; font-size: 12px; cursor: pointer; outline: none; margin: 0 2px;';
     
-    const categories = ['营销活动', '视频', '长图H5', '海报', '互动游戏', 'IP/插画', '小猪民宿'];
-    categories.forEach(catName => {
+   // 动态获取当前的分类列表（优先读取分类配置对象，若无则取全局/缓存变量）
+    let dynamicCategories = [];
+    if (typeof categoriesData !== 'undefined' && Array.isArray(categoriesData)) {
+      dynamicCategories = categoriesData.map(c => typeof c === 'object' ? (c.name || c.id) : c);
+    } else if (typeof categories !== 'undefined' && Array.isArray(categories)) {
+      dynamicCategories = categories;
+    } else {
+      dynamicCategories = JSON.parse(localStorage.getItem('portfolio_categories') || '[]')
+        .map(c => typeof c === 'object' ? (c.name || c.id) : c);
+    }
+
+    // 若没有获取到动态分类，提供默认保底
+    if (!dynamicCategories.length) {
+      dynamicCategories = ['营销活动', '视频', '长图H5', '海报', '互动游戏', 'IP/插画', '小猪民宿'];
+    }
+
+    dynamicCategories.forEach(catName => {
       const opt = document.createElement('option');
       opt.value = catName;
       opt.innerText = catName;
