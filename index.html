@@ -199,97 +199,59 @@
       word-break: break-all;
     }
 
-  /* Tab 导航外层容器 */
-.category-nav {
-  position: sticky !important;
-  top: 0 !important;
-  z-index: 100 !important;
-  display: flex !important;
-  align-items: center !important;
-  gap: 10px !important;
-  padding: 16px 20px !important;
-  background: rgba(18, 18, 18, 0.9) !important;
-  backdrop-filter: blur(20px) !important;
-  -webkit-backdrop-filter: blur(20px) !important;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.08) !important;
-  overflow-x: auto !important;
-  scrollbar-width: none !important;
-}
-.category-nav::-webkit-scrollbar { display: none !important; }
-
-/* 默认按钮胶囊样式 */
-.category-nav button,
-.category-nav .nav-item,
-.category-nav .tab-btn {
-  padding: 8px 20px !important;
-  font-size: 14px !important;
-  font-weight: 500 !important;
-  color: #a1a1a6 !important;
-  background: #222222 !important;
-  border: 1px solid rgba(255, 255, 255, 0.1) !important;
-  border-radius: 20px !important;
-  cursor: pointer !important;
-  transition: all 0.25s ease !important;
-  white-space: nowrap !important;
-}
-
-/* 鼠标悬停 */
-.category-nav button:hover,
-.category-nav .nav-item:hover,
-.category-nav .tab-btn:hover {
-  color: #ffffff !important;
-  background: #333333 !important;
-  border-color: rgba(255, 255, 255, 0.2) !important;
-}
-
-/* 选中高亮状态 */
-.category-nav button.active,
-.category-nav .nav-item.active,
-.category-nav .tab-btn.active,
-.category-nav button[class*="active"] {
-  color: #ffffff !important;
-  background: #ff9f0a !important; /* 想要换成蓝色可以改成 #0071e3 */
-  border-color: #ff9f0a !important;
-  font-weight: 600 !important;
-  box-shadow: 0 4px 14px rgba(255, 159, 10, 0.35) !important;
-}
-  cursor: pointer;
-  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
-  white-space: nowrap;
-}
-
-.nav-item:hover {
-  color: #ffffff;
-  background: rgba(255, 255, 255, 0.12);
-  transform: translateY(-1px);
-}
-
-.nav-item.active {
-  color: #ffffff;
-  background: var(--primary-color, #0071e3);
-  border-color: var(--primary-color, #0071e3);
-  font-weight: 600;
-  box-shadow: 0 4px 12px rgba(0, 113, 227, 0.3);
-}
-      color: #8e8e93;
-      font-size: 14px;
-      padding: 6px 16px;
-      border-radius: 20px;
-      background: rgba(255, 255, 255, 0.08);
-      border: none;
-      cursor: pointer;
-      transition: all 0.25s ease;
-      display: inline-flex;
-      align-items: center;
-      font-weight: 500;
+    /* Tab 导航外层容器 */
+    .category-nav {
+      position: sticky !important;
+      top: 0 !important;
+      z-index: 100 !important;
+      display: flex !important;
+      align-items: center !important;
+      gap: 10px !important;
+      padding: 16px 20px !important;
+      background: rgba(18, 18, 18, 0.9) !important;
+      backdrop-filter: blur(20px) !important;
+      -webkit-backdrop-filter: blur(20px) !important;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08) !important;
+      overflow-x: auto !important;
+      scrollbar-width: none !important;
     }
-    .nav-item:hover {
-      color: #ffffff;
+    .category-nav::-webkit-scrollbar { display: none !important; }
+
+    /* 默认按钮胶囊样式 */
+    .category-nav button,
+    .category-nav .nav-item,
+    .category-nav .tab-btn {
+      padding: 8px 20px !important;
+      font-size: 14px !important;
+      font-weight: 500 !important;
+      color: #a1a1a6 !important;
+      background: #222222 !important;
+      border: 1px solid rgba(255, 255, 255, 0.1) !important;
+      border-radius: 20px !important;
+      cursor: pointer !important;
+      transition: all 0.25s ease !important;
+      white-space: nowrap !important;
     }
-    .nav-item.active {
-      color: #ffffff;
-      background: var(--primary-color);
-      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+
+    /* 鼠标悬停 */
+    .category-nav button:hover,
+    .category-nav .nav-item:hover,
+    .category-nav .tab-btn:hover {
+      color: #ffffff !important;
+      background: #333333 !important;
+      border-color: rgba(255, 255, 255, 0.2) !important;
+    }
+
+    /* 选中高亮状态 */
+    .category-nav button.active,
+    .category-nav .nav-item.active,
+    .category-nav .tab-btn.active,
+    .category-nav button[class*="active"] {
+      color: #ffffff !important;
+      background: #ff9f0a !important;
+      border-color: #ff9f0a !important;
+      font-weight: 600 !important;
+      box-shadow: 0 4px 14px rgba(255, 159, 10, 0.35) !important;
     }
 
     main { padding: 24px 20px; }
@@ -460,102 +422,90 @@
 
     </div>
 
-  <div class="preview-area">
-  <!-- 封面与自我介绍展示区域（支持多图纵向排列） -->
-<div class="profile-header-container" style="padding: 20px; text-align: center;">
-  <div id="header-img-list" style="display: flex; flex-direction: column; gap: 16px;">
-    <!-- 上传的多张图片会自动纵向排列在这里 -->
+    <div class="preview-area">
+      <!-- 封面与自我介绍展示区域（支持多图纵向排列） -->
+      <div class="profile-header-container" style="padding: 20px; text-align: center;">
+        <div id="header-img-list" style="display: flex; flex-direction: column; gap: 16px;">
+          <!-- 上传的多张图片会自动纵向排列在这里 -->
+        </div>
+      </div>
+
+      <!-- 后台专属：上传与分类控件 -->
+      <div class="admin-only-tools" style="padding: 16px 20px; background: rgba(255,255,255,0.03); border-radius: 8px; margin-bottom: 20px;">
+        <div style="display: flex; align-items: center; gap: 12px; justify-content: flex-end;">
+          <!-- 分类选择下拉框 -->
+          <label style="font-size: 13px; color: #8e8e93;">归属分类：</label>
+          <select id="header-tag-select" style="padding: 6px 12px; background: #222; color: #fff; border: 1px solid rgba(255,255,255,0.15); border-radius: 6px; font-size: 13px; outline: none;">
+            <option value="all">全部分类</option>
+            <option value="营销活动">营销活动</option>
+            <option value="视频">视频</option>
+            <option value="长图H5">长图H5</option>
+            <option value="海报">海报</option>
+            <option value="互动游戏">互动游戏</option>
+            <option value="IP/插画">IP/插画</option>
+          </select>
+
+          <!-- 上传按钮 -->
+          <label for="header-img-input" style="font-size: 13px; color: #fff; cursor: pointer; background: var(--primary-color, #0071e3); padding: 6px 14px; border-radius: 6px;">
+            📷 上传/添加图片
+          </label>
+          <input type="file" id="header-img-input" accept="image/*" multiple style="display: none;" />
+        </div>
+      </div>
+
+      <!-- 下方吸顶 Tab 导航栏 -->
+      <nav class="category-nav" id="category-nav"></nav>
+      <main id="portfolio-container">
+        <div id="loading">正在加载作品内容...</div>
+      </main>
+    </div>
   </div>
-</div>
-
-<!-- 后台专属：上传与分类控件 -->
-<div class="admin-only-tools" style="padding: 16px 20px; background: rgba(255,255,255,0.03); border-radius: 8px; margin-bottom: 20px;">
-  <div style="display: flex; align-items: center; gap: 12px; justify-content: flex-end;">
-    <!-- 分类选择下拉框 -->
-    <label style="font-size: 13px; color: #8e8e93;">归属分类：</label>
-    <select id="header-tag-select" style="padding: 6px 12px; background: #222; color: #fff; border: 1px solid rgba(255,255,255,0.15); border-radius: 6px; font-size: 13px; outline: none;">
-      <option value="all">全部分类</option>
-      <option value="营销活动">营销活动</option>
-      <option value="视频">视频</option>
-      <option value="长图H5">长图H5</option>
-      <option value="海报">海报</option>
-      <option value="互动游戏">互动游戏</option>
-      <option value="IP/插画">IP/插画</option>
-    </select>
-
-    <!-- 上传按钮 -->
-    <label for="header-img-input" style="font-size: 13px; color: #fff; cursor: pointer; background: var(--primary-color, #0071e3); padding: 6px 14px; border-radius: 6px;">
-      📷 上传/添加图片
-    </label>
-    <input type="file" id="header-img-input" accept="image/*" multiple style="display: none;" />
-  </div>
-</div>
-
-  <!-- 下方吸顶 Tab 导航栏 -->
-  <nav class="category-nav" id="category-nav"></nav>
-  <main id="portfolio-container">
-    <div id="loading">正在加载作品内容...</div>
-  </main>
-</div>
 
   <script>
-  // Header 多图上传与本地预览保存
-const headerInput = document.getElementById('header-img-input');
-const headerImgList = document.getElementById('header-img-list');
+    // Header 多图上传与本地预览保存
+    const headerInput = document.getElementById('header-img-input');
+    const headerImgList = document.getElementById('header-img-list');
 
-// 渲染多图列表的辅助函数
-function renderHeaderImages(imgArray) {
-  if (!headerImgList) return;
-  headerImgList.innerHTML = '';
-  imgArray.forEach((src) => {
-    const img = document.createElement('img');
-    img.src = src;
-    img.style.cssText = 'width: 100%; height: auto; border-radius: 12px; display: block;';
-    headerImgList.appendChild(img);
-  });
-}
+    // 渲染多图列表的辅助函数
+    function renderHeaderImages(imgArray) {
+      if (!headerImgList) return;
+      headerImgList.innerHTML = '';
+      imgArray.forEach((src) => {
+        const img = document.createElement('img');
+        img.src = src;
+        img.style.cssText = 'width: 100%; height: auto; border-radius: 12px; display: block;';
+        headerImgList.appendChild(img);
+      });
+    }
 
-// 1. 页面加载时读取已存的多图数组
-window.addEventListener('DOMContentLoaded', () => {
-  const savedImgs = JSON.parse(localStorage.getItem('custom_header_imgs') || '[]');
-  if (savedImgs.length > 0) {
-    renderHeaderImages(savedImgs);
-  }
-});
-
-// 2. 监听多图选择并更新预览
-headerInput?.addEventListener('change', async (e) => {
-  const files = Array.from(e.target.files);
-  if (files.length === 0) return;
-
-  const readPromises = files.map(file => {
-    return new Promise((resolve) => {
-      const reader = new FileReader();
-      reader.onload = (evt) => resolve(evt.target.result);
-      reader.readAsDataURL(file);
+    // 1. 页面加载时读取已存的多图数组
+    window.addEventListener('DOMContentLoaded', () => {
+      const savedImgs = JSON.parse(localStorage.getItem('custom_header_imgs') || '[]');
+      if (savedImgs.length > 0) {
+        renderHeaderImages(savedImgs);
+      }
     });
-  });
 
-  const base64Images = await Promise.all(readPromises);
-  
-  // 渲染并保存
-  renderHeaderImages(base64Images);
-  localStorage.setItem('custom_header_imgs', JSON.stringify(base64Images));
-});
+    // 2. 监听多图选择并更新预览
+    headerInput?.addEventListener('change', async (e) => {
+      const files = Array.from(e.target.files);
+      if (files.length === 0) return;
 
-// 2. 监听文件选择并更新展示
-headerInput?.addEventListener('change', (e) => {
-  const file = e.target.files[0];
-  if (file) {
-    const reader = new FileReader();
-    reader.onload = function(evt) {
-      const base64Url = evt.target.result;
-      if (displayHeaderImg) displayHeaderImg.src = base64Url;
-      localStorage.setItem('custom_header_img', base64Url);
-    };
-    reader.readAsDataURL(file);
-  }
-});
+      const readPromises = files.map(file => {
+        return new Promise((resolve) => {
+          const reader = new FileReader();
+          reader.onload = (evt) => resolve(evt.target.result);
+          reader.readAsDataURL(file);
+        });
+      });
+
+      const base64Images = await Promise.all(readPromises);
+      
+      // 渲染并保存
+      renderHeaderImages(base64Images);
+      localStorage.setItem('custom_header_imgs', JSON.stringify(base64Images));
+    });
+
     const SUPABASE_API_KEY = 'sb_publishable_WlJg39rJcx_L7lO8wDG-zw_qTE4fF5o';
     const ADMIN_KEY = 'Sakula2026'; // 管理密钥
 
@@ -807,118 +757,73 @@ headerInput?.addEventListener('change', (e) => {
         if (actionsDiv) {
           actionsDiv.innerHTML = '';
 
-        // 1. 上移按钮
-    if (idx > 0) {
-      const upBtn = document.createElement('button');
-      upBtn.className = 'img-action-btn';
-      upBtn.innerText = '▲ 上移';
-      upBtn.onclick = (e) => moveImage(catId, idx, idx - 1, e);
-      actionsDiv.appendChild(upBtn);
-    }
+          // 1. 上移按钮
+          if (idx > 0) {
+            const upBtn = document.createElement('button');
+            upBtn.className = 'img-action-btn';
+            upBtn.innerText = '▲ 上移';
+            upBtn.onclick = (e) => moveImage(catId, idx, idx - 1, e);
+            actionsDiv.appendChild(upBtn);
+          }
 
-    // 2. 下移按钮
-    if (idx < list.length - 1) {
-      const downBtn = document.createElement('button');
-      downBtn.className = 'img-action-btn';
-      downBtn.innerText = '▼ 下移';
-      downBtn.onclick = (e) => moveImage(catId, idx, idx + 1, e);
-      actionsDiv.appendChild(downBtn);
-    }
+          // 2. 下移按钮
+          if (idx < list.length - 1) {
+            const downBtn = document.createElement('button');
+            downBtn.className = 'img-action-btn';
+            downBtn.innerText = '▼ 下移';
+            downBtn.onclick = (e) => moveImage(catId, idx, idx + 1, e);
+            actionsDiv.appendChild(downBtn);
+          }
 
-   // 3. 分类切换下拉框（修复 [object Object] 与实现自动保存）
-const catSelect = document.createElement('select');
-catSelect.className = 'img-action-btn';
-catSelect.style.cssText = 'background: #444; color: #fff; border: 1px solid #666; border-radius: 4px; padding: 2px 6px; font-size: 12px; cursor: pointer; outline: none; margin: 0 2px;';
+          // 3. 分类切换下拉框
+          const catSelect = document.createElement('select');
+          catSelect.className = 'img-action-btn';
+          catSelect.style.cssText = 'background: #444; color: #fff; border: 1px solid #666; border-radius: 4px; padding: 2px 6px; font-size: 12px; cursor: pointer; outline: none; margin: 0 2px;';
 
-// 动态解析分类数组，提取字符串名称
-let rawCategories = [];
-if (typeof categoriesData !== 'undefined' && Array.isArray(categoriesData)) {
-  rawCategories = categoriesData;
-} else if (typeof categories !== 'undefined' && Array.isArray(categories)) {
-  rawCategories = categories;
-} else {
-  rawCategories = JSON.parse(localStorage.getItem('portfolio_categories') || '[]');
-}
+          categories.forEach(c => {
+            const opt = document.createElement('option');
+            opt.value = c.id;
+            opt.innerText = c.name;
+            if (c.id === catId) opt.selected = true;
+            catSelect.appendChild(opt);
+          });
 
-// 保底分类列表
-if (!rawCategories.length) {
-  rawCategories = ['营销活动', '视频', '长图H5', '海报', '互动游戏', 'IP/插画', '小猪民宿'];
-}
+          catSelect.onchange = (e) => {
+            e.stopPropagation();
+            const targetCatId = e.target.value;
+            if (targetCatId === catId) return;
 
-// 格式化并渲染选项：确保取的是字符串名称，绝不输出 [object Object]
-rawCategories.forEach(c => {
-  const catName = (typeof c === 'object' && c !== null) ? (c.name || c.title || c.id || '') : String(c);
-  if (!catName) return;
+            const [targetItem] = portfolioData[catId].splice(idx, 1);
+            if (!portfolioData[targetCatId]) portfolioData[targetCatId] = [];
+            portfolioData[targetCatId].push(targetItem);
+            renderPortfolioContent();
+          };
 
-  const opt = document.createElement('option');
-  opt.value = catName;
-  opt.innerText = catName;
+          actionsDiv.appendChild(catSelect);
 
-  // 判断当前选中状态
-  const currentCat = (typeof catId !== 'undefined' && catId) ? catId : (imgObj && (imgObj.category || imgObj.tag));
-  if (currentCat === catName) opt.selected = true;
-  catSelect.appendChild(opt);
-});
+          // 4. 替换按钮
+          const replaceBtn = document.createElement('button');
+          replaceBtn.className = 'img-action-btn replace-btn';
+          replaceBtn.innerText = '替换';
+          replaceBtn.onclick = () => {
+            const currentUrl = portfolioData[catId][idx];
+            const newUrl = prompt('请输入替换后的新图片/视频链接：', currentUrl);
+            if (newUrl && newUrl.trim() && newUrl.trim() !== currentUrl) {
+              portfolioData[catId][idx] = newUrl.trim();
+              renderPortfolioContent();
+            }
+          };
+          actionsDiv.appendChild(replaceBtn);
 
-// 自动保存与实时刷新逻辑
-catSelect.onchange = (e) => {
-  e.stopPropagation();
-  const newCat = e.target.value;
-  
-  // 1. 更新当前内存数据对象
-  if (typeof list !== 'undefined' && list[idx]) {
-    if (typeof list[idx] === 'string') {
-      list[idx] = { url: list[idx], category: newCat };
-    } else {
-      list[idx].category = newCat;
-    }
-  } else if (typeof imgObj !== 'undefined' && imgObj) {
-    imgObj.category = newCat;
-  }
-
-  // 2. 触发持久化保存（更新 LocalStorage）
-  if (typeof saveHeaderImages === 'function') {
-    saveHeaderImages();
-  } else if (typeof saveHeaderData === 'function') {
-    saveHeaderData(list);
-  } else if (typeof list !== 'undefined') {
-    localStorage.setItem('custom_header_imgs_v2', JSON.stringify(list));
-  }
-
-  // 3. 自动重新无缝渲染视图（无需手动刷新页面）
-  if (typeof renderHeaderImages === 'function') {
-    renderHeaderImages(list);
-  } else if (typeof renderCategoryContent === 'function') {
-    renderCategoryContent();
-  } else if (typeof moveImage === 'function') {
-    moveImage(catId, 0, 0, null);
-  } else {
-    location.reload();
-  }
-};
-
-actionsDiv.appendChild(catSelect);
-
-    // 4. 替换按钮
-    const replaceBtn = document.createElement('button');
-    replaceBtn.className = 'img-action-btn replace-btn';
-    replaceBtn.innerText = '替换';
-    replaceBtn.onclick = (e) => {
-      if (typeof replaceImage === 'function') replaceImage(catId, idx, e);
-    };
-    actionsDiv.appendChild(replaceBtn);
-
-    // 5. 删除按钮
-    const delBtn = document.createElement('button');
-    delBtn.className = 'img-action-btn delete-btn';
-    delBtn.innerText = '删除';
-    delBtn.onclick = (e) => {
-      list.splice(idx, 1);
-      wrapper.remove();
-      if (typeof moveImage === 'function') moveImage(catId, 0, 0, null);
-    };
-    actionsDiv.appendChild(replaceBtn);
-    actionsDiv.appendChild(delBtn);
+          // 5. 删除按钮
+          const delBtn = document.createElement('button');
+          delBtn.className = 'img-action-btn delete-btn';
+          delBtn.innerText = '删除';
+          delBtn.onclick = () => {
+            portfolioData[catId].splice(idx, 1);
+            renderPortfolioContent();
+          };
+          actionsDiv.appendChild(delBtn);
         }
       });
     }
@@ -1048,6 +953,32 @@ actionsDiv.appendChild(catSelect);
                 actionsDiv.appendChild(downBtn);
               }
 
+              // 分类切换下拉框
+              const catSelect = document.createElement('select');
+              catSelect.className = 'img-action-btn';
+              catSelect.style.cssText = 'background: #444; color: #fff; border: 1px solid #666; border-radius: 4px; padding: 2px 6px; font-size: 12px; cursor: pointer; outline: none; margin: 0 2px;';
+
+              categories.forEach(c => {
+                const opt = document.createElement('option');
+                opt.value = c.id;
+                opt.innerText = c.name;
+                if (c.id === cat.id) opt.selected = true;
+                catSelect.appendChild(opt);
+              });
+
+              catSelect.onchange = (e) => {
+                e.stopPropagation();
+                const targetCatId = e.target.value;
+                if (targetCatId === cat.id) return;
+
+                const [targetItem] = portfolioData[cat.id].splice(idx, 1);
+                if (!portfolioData[targetCatId]) portfolioData[targetCatId] = [];
+                portfolioData[targetCatId].push(targetItem);
+                renderPortfolioContent();
+              };
+
+              actionsDiv.appendChild(catSelect);
+
               const replaceBtn = document.createElement('button');
               replaceBtn.className = 'img-action-btn replace-btn';
               replaceBtn.innerText = '替换';
@@ -1131,7 +1062,6 @@ actionsDiv.appendChild(catSelect);
 
     async function loadPortfolioData() {
       try {
-        // 如果非管理员，且没有提供 shareID，直接阻止访问，不自动读取最新的记录
         if (!isAdmin && !shareId) {
           document.getElementById('portfolio-container').innerHTML = '<div id="loading">⚠️ 无法访问：请使用有效的分享链接查看作品集</div>';
           document.getElementById('category-nav').style.display = 'none';
@@ -1161,7 +1091,6 @@ actionsDiv.appendChild(catSelect);
           if (data && data[0]) {
             const record = data[0];
 
-            // 如果是普通访客，强行校验过期时间
             if (isShareMode && record.expires_at) {
               const now = Date.now();
               const expireTime = new Date(record.expires_at).getTime();
