@@ -771,6 +771,8 @@
 
       const currentScrollY = window.scrollY || document.documentElement.scrollTop;
 
+      // 锁住当前容器的高度，防止清空时页面高度变 0 导致滚动条回弹
+  container.style.minHeight = `${container.getBoundingClientRect().height}px`;
       container.innerHTML = '';
       let hasMedia = false;
 
@@ -941,10 +943,10 @@
         setupScrollObserver();
       }
 
-     // 1. 暂时禁用滚动观察者，防止它在渲染瞬间把页面强行定位
+  // 1. 暂时禁用滚动观察者，防止它在渲染瞬间把页面强行定位
     if (navObserver) navObserver.disconnect();
 
-    // 2. 恢复滚动位置（使用 double-raf 确保 DOM 彻底更新后执行）
+    // 2. 恢复滚动位置
     requestAnimationFrame(() => {
       requestAnimationFrame(() => {
         window.scrollTo({
@@ -952,10 +954,16 @@
           behavior: 'instant'
         });
         
-        // 3. 恢复完位置后，重新启动滚动监听
+        // 恢复完位置后，重新启动滚动监听
         setupScrollObserver();
       });
     });
+
+    setTimeout(() => { isRendering = false; }, 350);
+
+    // 3. 渲染完成后解锁容器高度
+    setTimeout(() => { container.style.minHeight = ''; }, 300);
+}
 
     setTimeout(() => { isRendering = false; }, 350);
     }
