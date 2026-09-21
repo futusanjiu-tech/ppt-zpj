@@ -941,7 +941,12 @@
         setupScrollObserver();
       }
 
-      window.scrollTo(0, currentScrollY);
+     requestAnimationFrame(() => {
+  window.scrollTo({
+    top: currentScrollY,
+    behavior: 'instant'
+  });
+});
       setTimeout(() => { isRendering = false; }, 350);
     }
 
