@@ -579,10 +579,6 @@ headerInput?.addEventListener('change', async (e) => {
   headerInput.value = ''; // 清空以允许重复上传同名文件
 });
 
-      const base64Images = await Promise.all(readPromises);
-      renderHeaderImages(base64Images);
-      localStorage.setItem('custom_header_imgs', JSON.stringify(base64Images));
-    });
 
     const SUPABASE_API_KEY = 'sb_publishable_WlJg39rJcx_L7lO8wDG-zw_qTE4fF5o';
     const ADMIN_KEY = 'Sakula2026';
