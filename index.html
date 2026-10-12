@@ -470,7 +470,49 @@
   <script>
     const headerInput = document.getElementById('header-img-input');
     const headerImgList = document.getElementById('header-img-list');
+// 渲染封面多图列表的辅助函数（支持单张删除）
+function renderHeaderImages(imgArray) {
+  if (!headerImgList) return;
+  headerImgList.innerHTML = '';
+  if (!Array.isArray(imgArray)) return;
 
+  imgArray.forEach((src, idx) => {
+    if (!src) return;
+
+    // 创建单张图的外层包裹容器
+    const wrapper = document.createElement('div');
+    wrapper.style.cssText = 'position: relative; width: 100%;';
+
+    // 创建图片元素
+    const img = document.createElement('img');
+    img.src = src;
+    img.style.cssText = 'width: 100%; height: auto; border-radius: 0; display: block;';
+    wrapper.appendChild(img);
+
+    // 仅在管理员模式（isAdmin）下显示删除按钮
+    if (isAdmin) {
+      const delBtn = document.createElement('button');
+      delBtn.innerText = '🗑️ 删除';
+      delBtn.style.cssText = 'position: absolute; top: 10px; right: 10px; background: rgba(255, 59, 48, 0.85); color: white; border: none; padding: 5px 10px; border-radius: 6px; cursor: pointer; font-size: 12px; z-index: 10;';
+      
+      delBtn.onmouseover = () => delBtn.style.background = 'rgba(255, 59, 48, 1)';
+      delBtn.onmouseout = () => delBtn.style.background = 'rgba(255, 59, 48, 0.85)';
+
+      delBtn.onclick = () => {
+        // 从数组中移除当前这张图片
+        imgArray.splice(idx, 1);
+        // 更新本地存储
+        localStorage.setItem('custom_header_imgs', JSON.stringify(imgArray));
+        // 重新渲染封面列表
+        renderHeaderImages(imgArray);
+      };
+
+      wrapper.appendChild(delBtn);
+    }
+
+    headerImgList.appendChild(wrapper);
+  });
+}
     // 1. 页面加载时优先读取本地预览封面
     window.addEventListener('DOMContentLoaded', () => {
       const savedImgs = JSON.parse(localStorage.getItem('custom_header_imgs') || '[]');
