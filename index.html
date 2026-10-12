@@ -471,20 +471,6 @@
     const headerInput = document.getElementById('header-img-input');
     const headerImgList = document.getElementById('header-img-list');
 
-    // 渲染封面多图列表的辅助函数
-    function renderHeaderImages(imgArray) {
-      if (!headerImgList) return;
-      headerImgList.innerHTML = '';
-      if (!Array.isArray(imgArray)) return;
-      imgArray.forEach((src) => {
-        if (!src) return;
-        const img = document.createElement('img');
-        img.src = src;
-       img.style.cssText = 'width: 100%; height: auto; border-radius: 0; display: block;';
-        headerImgList.appendChild(img);
-      });
-    }
-
     // 1. 页面加载时优先读取本地预览封面
     window.addEventListener('DOMContentLoaded', () => {
       const savedImgs = JSON.parse(localStorage.getItem('custom_header_imgs') || '[]');
